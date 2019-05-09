@@ -1,6 +1,5 @@
 TODO:
 * fix: REST API key
-* fix: Is EXPOSE really needed?
 * is volume needed?
 * save test logs in target/datetime subdir + waves.log + test.log
 * add mainnet docker tag
