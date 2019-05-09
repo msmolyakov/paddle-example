@@ -9,13 +9,13 @@ rich:
 
 Settings:
 genesis {
-  average-block-delay: 20000ms
+  average-block-delay: 10000ms
   initial-base-target: 120
-  timestamp: 1556928050331
-  block-timestamp: 1556928050331
-  signature: "57thCfr7YWyMYktmLF6aryo7wmdXeoaw6HVcfUgFPgvUGDBMpU2nnk5rLAawDixxMLERzJMNa7qgKY4FZs1iPi6X"
-  initial-balance: 10000000000000000
+  timestamp: 1557412000848
+  block-timestamp: 1557412000848
+  signature: "4HcESCw9v4s4kGur8FKUB7m3QgEqQmohF3mjv8xySPYAXHUSgXZznGka34y7bvy3Vt4Q13THpPcx2CXLXjpy1Rpf"
+  initial-balance: 9223372036854775807
   transactions = [
-    {recipient: "3MPxsaJvNXXkUn2566L2CWuo31wdgPi3mod", amount: 10000000000000000}
+    {recipient: "3MPxsaJvNXXkUn2566L2CWuo31wdgPi3mod", amount: 9223372036854775807}
   ]
 }

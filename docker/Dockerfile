@@ -10,6 +10,6 @@ RUN apt-get update && apt-get install -y curl jq wget \
     && echo $JAR_REMOTE_PATH \
     && wget $JAR_REMOTE_PATH -O $APP_HOME/waves.jar -q --show-progress
 EXPOSE 6860 6869
-ENTRYPOINT ["java", "-jar", "/opt/waves/waves.jar", "/opt/waves/waves.conf"]
+ENTRYPOINT ["java", "-jar", "waves.jar", "waves.conf"]
 
 # provide volume for local.conf
