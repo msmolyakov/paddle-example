@@ -1,0 +1,21 @@
+Addresses:
+rich:
+ Seed text:           rich
+ Seed:                3vczFq
+ Account seed:        5sbw38pdc7td3RaUyS5roVYr24hfN2NtBohzoMLcTKtG
+ Private account key: AAA6e1SzLt49DzbzW7auuk3vkbBA6K1FdNP2BRnSPWd3
+ Public account key:  HTqgV95rPwnbHiAuXGDZSEiCWQbxHbeaLEWDdef8MiSN
+ Account address:     3MPxsaJvNXXkUn2566L2CWuo31wdgPi3mod
+
+Settings:
+genesis {
+  average-block-delay: 20000ms
+  initial-base-target: 120
+  timestamp: 1556928050331
+  block-timestamp: 1556928050331
+  signature: "57thCfr7YWyMYktmLF6aryo7wmdXeoaw6HVcfUgFPgvUGDBMpU2nnk5rLAawDixxMLERzJMNa7qgKY4FZs1iPi6X"
+  initial-balance: 10000000000000000
+  transactions = [
+    {recipient: "3MPxsaJvNXXkUn2566L2CWuo31wdgPi3mod", amount: 10000000000000000}
+  ]
+}
