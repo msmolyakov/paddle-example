@@ -5,7 +5,7 @@
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
 let keyBase = "base"
-let keyHeight = "height" # TODO prefix "#"?
+let keyHeight = "height"
 let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
@@ -21,103 +21,95 @@ let initBalance = 1 * rude
 func h() = getIntegerValue(this, keyHeight)
 func base() = getIntegerValue(this, keyBase)
 
-func block(h: Int) = getStringValue(this, if h == -1 then keyLast else h.toString())
+func blockInfo(h: Int) = getStringValue(this, if h == -1 then keyLast else h.toString())
 func blockReferenceHeight(h: Int) = {
-    let blockInfo = block(h)
-    let left = extract(indexOf(blockInfo, ",", extract(indexOf(blockInfo, ",")) + 1)) + 1
-    let right = extract(indexOf(blockInfo, ",", left))
-    take(drop(blockInfo, left), right - left).parseIntValue()
+    let blInfo = blockInfo(h)
+    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1
+    let right = extract(indexOf(blInfo, ",", left))
+    take(drop(blInfo, left), right - left).parseIntValue()
 }
 func blockMinerPublicKey(h: Int) = {
-    let blockInfo = block(h)
-    let left = extract(indexOf(blockInfo, ",", extract(indexOf(blockInfo, ",", extract(indexOf(blockInfo, ",")) + 1)) + 1)) + 1
-    let right = extract(indexOf(blockInfo, ",", left))
-    take(drop(blockInfo, left), right - left)
+    let blInfo = blockInfo(h)
+    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1
+    let right = extract(indexOf(blInfo, ",", left))
+    take(drop(blInfo, left), right - left)
+}
+func blockGazReward(h: Int) = {
+    let blInfo = blockInfo(h)
+    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1)) + 1)) + 1
+    let right = extract(indexOf(blInfo, ",", left))
+    take(drop(blInfo, left), right - left)
 }
 
 func pubKey(pk: ByteVector) = pk.toBase58String()
 func accountOf(pk: ByteVector) = getString(this, keyPubKeyPrefix + pubKey(pk))
-func account(name: String) = getString(this, keyAccountPrefix + name)
+func accountInfo(name: String) = getString(this, keyAccountPrefix + name)
 func isRegistered(pK: ByteVector) = isDefined(accountOf(pK))
-func isTaken(acc: String) = isDefined(account(acc))
+func isTaken(acc: String) = isDefined(accountInfo(acc))
 
 func pubKeyOf(account: String) = {
-    let accountInfo = extract(account(account))
+    let accInfo = extract(accountInfo(account))
     let left = 0
-    let right = extract(indexOf(accountInfo, ",", left))
-    take(drop(accountInfo, left), right - left)
+    let right = extract(indexOf(accInfo, ",", left))
+    take(drop(accInfo, left), right - left)
 }
 func regHeightOf(account: String) = {
-    let accountInfo = extract(account(account))
-    let left = extract(indexOf(accountInfo, ",")) + 1
-    let right = extract(indexOf(accountInfo, ",", left))
-    take(drop(accountInfo, left), right - left).parseIntValue()
+    let accInfo = extract(accountInfo(account))
+    let left = extract(indexOf(accInfo, ",")) + 1
+    let right = extract(indexOf(accInfo, ",", left))
+    take(drop(accInfo, left), right - left).parseIntValue()
 }
 func totalBalanceOf(account: String) = {
-    let accountInfo = extract(account(account))
-    let left = extract(indexOf(accountInfo, ",", extract(indexOf(accountInfo, ",")) + 1)) + 1
-    let right = extract(indexOf(accountInfo, ",", left))
-    take(drop(accountInfo, left), right - left).parseIntValue()
+    let accInfo = extract(accountInfo(account))
+    let left = extract(indexOf(accInfo, ",", extract(indexOf(accInfo, ",")) + 1)) + 1
+    let right = extract(indexOf(accInfo, ",", left))
+    take(drop(accInfo, left), right - left).parseIntValue()
 }
 func availableBalanceOf(account: String) = {
-    let accountInfo = extract(account(account))
-    let left = extract(indexOf(accountInfo, ",", extract(indexOf(accountInfo, ",", extract(indexOf(accountInfo, ",")) + 1)) + 1)) + 1
-    let right = accountInfo.size()
-    take(drop(accountInfo, left), right - left).parseIntValue()
+    let accInfo = extract(accountInfo(account))
+    let left = extract(indexOf(accInfo, ",", extract(indexOf(accInfo, ",", extract(indexOf(accInfo, ",")) + 1)) + 1)) + 1
+    let right = accInfo.size()
+    take(drop(accInfo, left), right - left).parseIntValue()
 }
 
 func validate(script: String) = {
-    func send(code: String) = {
-        let comma = indexOf(code, ",")
-        if !isDefined(comma) then "send() must have two args: amount and recipient"
-        else
-            let rBrace = indexOf(drop(code, extract(comma) + 1), ")")
-            if !isDefined(rBrace) then "missing closing bracket"
-            else if drop(code, extract(comma) + 1).size() > extract(rBrace) + 1 then "unexpected code after ')'"
-            else
-                let amount = take(code, extract(comma)).parseInt()
-                let recipient = take(drop(code, extract(comma) + 1), extract(rBrace))
-
-                if !isDefined(amount) || extract(amount) < 1 then "amount must be a positive number"
-                else if !isDefined(getString(this, recipient)) then "recipient doesn't exist"
-                else ""
+    let words = script.split(" ") # TODO разделитель для команд
+    func send(recipient: String, amount: Int) = {
+        if amount < 1 then "amount " + amount.toString() + " must be a positive number"
+        else if !isTaken(recipient) then "recipient '" + recipient + "' doesn't exist"
+        else ""
     }
 
-    if isDefined(indexOf(script, " ")) then "script must not contain white spaces" # TODO убрать к BTC стилю. Пробел - разделитель
-    else if take(script, 5) == "send(" then
-        send(drop(script, 5))
-    # TODO atomic swap
-    # TODO lightning
+    if words.size() < 3 then "unknown script format" # TODO 3? 2? 4?
     else
-        "script starts from unknown command"
+        if words[0] == "send" then
+            send(words[1], words[2].parseIntValue())
+        # TODO atomic swap
+        # TODO lightning
+        else
+            "script starts from unknown command"
 }
 
 func estimate(script: String) = {
-    if take(script, 5) == "send(" then 1 # TODO может быть несколько операций - сендов или других
+    let words = script.split(" ")
+    if words[0] == "send" then 1 # TODO может быть 5 операций - сендов или других
     # TODO atomic swap
     # TODO lightning
+    # TODO NFT
     else 0
 }
 
 func evaluate(gas: Int, script: String) = {
-    func send(amount: Int, recipient: String) = {
+    let words = script.split(" ")
+    func send(recipient: String, amount: Int) = {
         "send" # TODO проверить баланс
     }
-    func lightning() = {"lightning"} # TODO работа с лайтнинг каналом
-    func swap() = {"swap"} # TODO работа с atomic swap
+    #func lightning() = {"lightning"} # TODO работа с лайтнинг каналом
+    #func swap() = {"swap"} # TODO работа с atomic swap
 
-    if take(script, 5) == "send(" then
-        let args = drop(script, 5)
-        let comma = extract(indexOf(args, ","))
-        let rBrace = extract(indexOf(drop(args, comma + 1), ")"))
-
-        let amount = take(args, comma).parseIntValue()
-        let recipient = take(drop(args, comma + 1), rBrace)
-
-        send(amount, recipient)
-    # TODO atomic swap
-    # TODO lightning
-    else "script starts from unknown command"
+    if words[0] == "send" then
+        send(words[1], words[2].parseIntValue())
+    else WriteSet([]) # недостижимое состояние
 }
 
 func pErr(msg: String) = throw("Parse error: " + msg + "!")
@@ -149,9 +141,10 @@ func genesis() = {
         throw("blockchain is already created")
     else
         let gHeight = 0
-        let genesisBlock = "," + gHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + ",0"
+        # blockHash (omitted here), height, ref height, miner pK, prevBlockHash, gaz used in txs, txs (omitted here)
+        let genesisBlock = "," + gHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + ",0,0,"
         WriteSet(
-            DataEntry(keyLast, genesisBlock) # TODO хранить потраченный суммарный газ транзакций отдельным полем
+            DataEntry(keyLast, genesisBlock)
             ::DataEntry(keyHeight, gHeight)
             ::DataEntry(keyBase, 1)
             ::DataEntry(keyUtx, "")
@@ -185,22 +178,26 @@ func register(name: String) = {
     else
         WriteSet([
             DataEntry(keyPubKeyPrefix + i.callerPublicKey.toBase58String(), name),
+            #publicKey, regHeight, totalBalance, availableBalance
             DataEntry(keyAccountPrefix + name, pubKey(i.callerPublicKey) + "," + h().toString() + "," + initBalance.toString() + "," + initBalance.toString())
         ])
 }
 
+# TODO плавно снижать награду за блок, чтобы через N блоков осталась только комиссия за транзы
+# TODO нельзя майнить на той же высоте, что и текущий блок
 @Callable(i)
 func mine() = {
     # TODO для пазла должен быть нонс
     let freq = 2 # TODO заменить на проверку выполнения пазла (кол-во нулей или что-то еще) с учетом текущей сложности
 
+    # TODO майнер должен быть зареган
     if i.caller == this then
         throw("The dApp can't mine!")
     else if height - blockReferenceHeight(-1) < freq then
         throw("Can't mine more often than once every " + freq.toString() + " waves blocks")
     else
         let nextHeight = h() + 1
-        let liquidBlock = block(-1)
+        let liquidBlock = blockInfo(-1) # TODO брать хэш только от значений, без запятых?
         let liquidBlockHash = sha256(liquidBlock.toBytes()).toBase58String() # TODO Utf8 или toBase58? достаточно ли sha256? Попробовать blake и keccak
 
         ScriptResult(
@@ -208,12 +205,13 @@ func mine() = {
                 DataEntry(h().toString(), liquidBlockHash + liquidBlock)
                 , DataEntry(keyHeight, nextHeight)
                 , DataEntry(keyBase, base() + 1) # TODO калибровать сложность (от высоты, на которой был смайнен прошлый блок). Какая скорость?
-                , DataEntry(keyLast, "," + nextHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + "," + liquidBlockHash)
+                , DataEntry(keyLast, "," + nextHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey))
             ]),
             TransferSet([]) # TODO отправить комиссии за прошлый блок прошлому майнеру и dApp.
         )
 }
 
+# TODO ПРОВЕРЯТЬ БАЛАНС И SEND!
 # TODO учитывать в availableBalance газ в UTX, средства в свопе и лайтнинге
 @Callable(i)
 func utxProcessing() = {
@@ -231,6 +229,7 @@ func utxProcessing() = {
         let txGas = { let raw = drop(tx, txSignature.size() + txSenderPublicKey.size() + 2); take(raw, extract(indexOf(raw, ","))) }
         let txScript = drop(tx, txSignature.size() + txSenderPublicKey.size() + txGas.size() + 3)
 
+        # TODO evaluate!
 
         WriteSet([DataEntry("a", "a")]) # TODO verify (наличие газа), evaluate, запомнить gas, положить tx в блок
         # TODO если транзакции кончились или достигнут лимит транзакций за раз, то подтереть UTX и уменьшить size
@@ -238,30 +237,33 @@ func utxProcessing() = {
 
 @Callable(i)
 func transaction(signatureBase64: String, gas: Int, script: String) = {
-    let txBody = extract(accountOf(i.callerPublicKey)) + "," + gas.toString() + "," + script
-
     if i.caller == this then
         throw("The dApp can't send transactions!")
-    else if !isDefined(getString(this, i.callerPublicKey.toBase58String())) then
+    else if !isRegistered(i.callerPublicKey) then
         throw("Only registered accounts can send transactions!")
     else if !(getIntegerValue(this, keyUtxSize) < utxLimit) then
         throw("UTX size limit reached! Please try later")
-    else if !sigVerify(txBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then
-        throw("Incorrect signature!")
     else
-        let message = validate(script)
-        if message.size() > 0 then pErr(message)
-        else if !(gas > 0) then # TODO проверить, в наличии ли столько
+        let txBody = extract(accountOf(i.callerPublicKey)) + "," + gas.toString() + "," + script
+        let message = validate(script) # TODO ПРОВЕРЯТЬ БАЛАНС И SEND!
+
+        if !sigVerify(txBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then
+            throw("Incorrect signature!")
+        else if message.size() > 0 then pErr(message)
+        else if !(gas > 0) then
             throw("Gas amount must be positive!")
+        else if availableBalanceOf(extract(accountOf(i.callerPublicKey))) < gas then
+            throw("Not enough balance for payment")
         else
             let gasRequired = estimate(script)
             if gas < gasRequired then
-                throw("Not enough gas: " + gas.toString() + " but " + gasRequired.toString() + " estimated")
+                throw("Not enough gas: actual " + gas.toString() + " but " + gasRequired.toString() + " estimated")
         else
             let utxPool = getStringValue(this, keyUtx)
             WriteSet([
-                DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";")
-                , DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1)
+                DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";"),
+                DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1)
+                # TODO availBalance -= gaz
             ])
 }
 
