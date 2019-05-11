@@ -10,19 +10,16 @@ let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
 
-let dappPublicKey = base58'5AzfA9UfpWVYiwFwvdr77k6LWupSTGLb14b24oVdEpMM' # TODO выставить в конце!
+let dappPublicKey = base58'DwZpGQnaxahJcFsPoanVv8rTVV2WDgJhGY4rgx8AGoKH' # TODO выставить в конце!
 
+let registrationCost = 5 # TODO 10?
 let utxLimit = 10
 let rude = 1000 # TODO gaz = 1
 let blockMinerReward = 10 * rude
+let initBalance = 1 * rude
 
 func h() = getIntegerValue(this, keyHeight)
 func base() = getIntegerValue(this, keyBase)
-
-func pubKey(pk: ByteVector) = pk.toBase58String()
-func pubKeyOf(account: String) = getString(this, keyAccountPrefix + account)
-func account(pk: ByteVector) = getString(this, keyPubKeyPrefix + pubKey(pk))
-func balance(account: String) = getIntegerValue(this, account + "-balance") # TODO парсить из общей строки - см. коммент в reg()
 
 func block(h: Int) = getStringValue(this, if h == -1 then keyLast else h.toString())
 func blockReferenceHeight(h: Int) = {
@@ -38,12 +35,36 @@ func blockMinerPublicKey(h: Int) = {
     take(drop(blockInfo, left), right - left)
 }
 
-func newAccount(pk: ByteVector, name: String) = [
-    DataEntry(keyAccountPrefix + name, pk.toBase58String()),
-    DataEntry(keyPubKeyPrefix + pk.toBase58String(), name),
-    DataEntry(name + "-balance", 5 * rude) # TODO можно оптимизировать и хранить в байтах через разделитель вместе с waves-адресом
-    # TODO вместо просто баланса хранить available и total балансы (с учетом газа в UTX, средств в свопе и лайтнинге)
-]
+func pubKey(pk: ByteVector) = pk.toBase58String()
+func accountOf(pk: ByteVector) = getString(this, keyPubKeyPrefix + pubKey(pk))
+func account(name: String) = getString(this, keyAccountPrefix + name)
+func isRegistered(pK: ByteVector) = isDefined(accountOf(pK))
+func isTaken(acc: String) = isDefined(account(acc))
+
+func pubKeyOf(account: String) = {
+    let accountInfo = extract(account(account))
+    let left = 0
+    let right = extract(indexOf(accountInfo, ",", left))
+    take(drop(accountInfo, left), right - left)
+}
+func regHeightOf(account: String) = {
+    let accountInfo = extract(account(account))
+    let left = extract(indexOf(accountInfo, ",")) + 1
+    let right = extract(indexOf(accountInfo, ",", left))
+    take(drop(accountInfo, left), right - left).parseIntValue()
+}
+func totalBalanceOf(account: String) = {
+    let accountInfo = extract(account(account))
+    let left = extract(indexOf(accountInfo, ",", extract(indexOf(accountInfo, ",")) + 1)) + 1
+    let right = extract(indexOf(accountInfo, ",", left))
+    take(drop(accountInfo, left), right - left).parseIntValue()
+}
+func availableBalanceOf(account: String) = {
+    let accountInfo = extract(account(account))
+    let left = extract(indexOf(accountInfo, ",", extract(indexOf(accountInfo, ",", extract(indexOf(accountInfo, ",")) + 1)) + 1)) + 1
+    let right = accountInfo.size()
+    take(drop(accountInfo, left), right - left).parseIntValue()
+}
 
 func validate(script: String) = {
     func send(code: String) = {
@@ -101,6 +122,19 @@ func evaluate(gas: Int, script: String) = {
 
 func pErr(msg: String) = throw("Parse error: " + msg + "!")
 
+#TODO del
+@Callable(i)
+func unitTest() = {
+    let accName = "bob1"
+
+    WriteSet([
+        DataEntry("pK", pubKeyOf(accName)),
+        DataEntry("hei", regHeightOf(accName)),
+        DataEntry("tB", totalBalanceOf(accName)),
+        DataEntry("aB", availableBalanceOf(accName))
+    ])
+}
+
 @Callable(i)
 func genesis() = {
     if i.caller != this then
@@ -125,13 +159,14 @@ func genesis() = {
         )
 }
 
+# TODO может рега только за майнинг блока?
 @Callable(i)
 func register(name: String) = {
     let callerPubKey = i.callerPublicKey.toBase58String()
     let validChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-    if (!isDefined(i.payment) || isDefined(extract(i.payment).assetId) || extract(i.payment).amount != 500000000) then
-        throw("Registration costs 5 Waves!")
+    if (!isDefined(i.payment) || isDefined(extract(i.payment).assetId) || extract(i.payment).amount != registrationCost * 100000000) then
+        throw("Registration costs " + registrationCost.toString() + " Waves!")
     else if !(size(name) > 0 && size(name) <= 8 && isDefined(indexOf(validChars, take(name, 1)))
         && (if (size(name) > 1) then isDefined(indexOf(validChars, take(drop(name, 1), 1))) else true)
         && (if (size(name) > 2) then isDefined(indexOf(validChars, take(drop(name, 2), 1))) else true)
@@ -142,15 +177,15 @@ func register(name: String) = {
         && (if (size(name) > 7) then isDefined(indexOf(validChars, take(drop(name, 7), 1))) else true))
     then
         throw("Account name must have [1..8] length and contain only [a-z0-9] chars")
-    else if isDefined(account(i.callerPublicKey)) then
-        throw("Public key of the caller is already registered as '" + extract(account(i.callerPublicKey)) + "'")
-    else if isDefined(pubKeyOf(name)) then
+    else if isRegistered(i.callerPublicKey) then
+        throw("Public key of the caller is already registered as '" + extract(accountOf(i.callerPublicKey)) + "'")
+    else if isTaken(name) then
         throw("Account name '" + name + "' is already taken")
     else
-    #ScriptResult(
-        WriteSet(newAccount(i.callerPublicKey, name))
-    #    , TransferSet([ScriptTransfer(i.caller, 50, gasAsset)])
-    #)
+        WriteSet([
+            DataEntry(keyPubKeyPrefix + i.callerPublicKey.toBase58String(), name),
+            DataEntry(keyAccountPrefix + name, pubKey(i.callerPublicKey) + "," + h().toString() + "," + initBalance.toString() + "," + initBalance.toString())
+        ])
 }
 
 @Callable(i)
@@ -178,6 +213,7 @@ func mine() = {
         )
 }
 
+# TODO учитывать в availableBalance газ в UTX, средства в свопе и лайтнинге
 @Callable(i)
 func utxProcessing() = {
     if i.callerPublicKey != blockMinerPublicKey(-1).fromBase58String() then
@@ -201,7 +237,7 @@ func utxProcessing() = {
 
 @Callable(i)
 func transaction(signatureBase64: String, gas: Int, script: String) = {
-    let txBody = extract(account(i.callerPublicKey)) + "," + gas.toString() + "," + script
+    let txBody = extract(accountOf(i.callerPublicKey)) + "," + gas.toString() + "," + script
 
     if i.caller == this then
         throw("The dApp can't send transactions!")
@@ -227,8 +263,6 @@ func transaction(signatureBase64: String, gas: Int, script: String) = {
                 , DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1)
             ])
 }
-
-# TODO func faucet для тестов
 
 @Verifier(tx)
 func verify() = {
