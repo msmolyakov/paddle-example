@@ -10,11 +10,11 @@ let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
 
-let dappPublicKey = base58'DwZpGQnaxahJcFsPoanVv8rTVV2WDgJhGY4rgx8AGoKH' # TODO выставить в конце!
+let dappPublicKey = base58'5AzfA9UfpWVYiwFwvdr77k6LWupSTGLb14b24oVdEpMM' # TODO выставить в конце!
 
 let registrationCost = 5 # TODO 10?
 let utxLimit = 10
-let rude = 1000 # TODO gaz = 1
+let rude = 100 # TODO gaz = 1
 let blockMinerReward = 10 * rude
 let initBalance = 1 * rude
 
@@ -125,14 +125,15 @@ func pErr(msg: String) = throw("Parse error: " + msg + "!")
 #TODO del
 @Callable(i)
 func unitTest() = {
-    let accName = "bob1"
+    #let accName = "bob1"
+    #WriteSet([
+    #    DataEntry("pK", pubKeyOf(accName)),
+    #    DataEntry("hei", regHeightOf(accName)),
+    #    DataEntry("tB", totalBalanceOf(accName)),
+    #    DataEntry("aB", availableBalanceOf(accName))
+    #])
 
-    WriteSet([
-        DataEntry("pK", pubKeyOf(accName)),
-        DataEntry("hei", regHeightOf(accName)),
-        DataEntry("tB", totalBalanceOf(accName)),
-        DataEntry("aB", availableBalanceOf(accName))
-    ])
+    WriteSet([DataEntry("genRefH", blockReferenceHeight(-1)), DataEntry("genMinerK", blockMinerPublicKey(-1))])
 }
 
 @Callable(i)
