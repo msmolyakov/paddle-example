@@ -2,7 +2,241 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
+let keyAccountPrefix = "@"
+let keyPubKeyPrefix = "$"
+let keyBase = "base"
+let keyHeight = "height" # TODO prefix "#"?
+let keyLast = "last"
+let keyUtx = "utx"
+let keyUtxSize = "utx-size"
+
+let dappPublicKey = base58'5AzfA9UfpWVYiwFwvdr77k6LWupSTGLb14b24oVdEpMM' # TODO выставить в конце!
+
+let utxLimit = 10
+let rude = 1000 # TODO gaz = 1
+let blockMinerReward = 10 * rude
+
+func h() = getIntegerValue(this, keyHeight)
+func base() = getIntegerValue(this, keyBase)
+
+func pubKey(pk: ByteVector) = pk.toBase58String()
+func pubKeyOf(account: String) = getString(this, keyAccountPrefix + account)
+func account(pk: ByteVector) = getString(this, keyPubKeyPrefix + pubKey(pk))
+func balance(account: String) = getIntegerValue(this, account + "-balance") # TODO парсить из общей строки - см. коммент в reg()
+
+func block(h: Int) = getStringValue(this, if h == -1 then keyLast else h.toString())
+func blockReferenceHeight(h: Int) = {
+    let blockInfo = block(h)
+    let left = extract(indexOf(blockInfo, ",", extract(indexOf(blockInfo, ",")) + 1)) + 1
+    let right = extract(indexOf(blockInfo, ",", left))
+    take(drop(blockInfo, left), right - left).parseIntValue()
+}
+func blockMinerPublicKey(h: Int) = {
+    let blockInfo = block(h)
+    let left = extract(indexOf(blockInfo, ",", extract(indexOf(blockInfo, ",", extract(indexOf(blockInfo, ",")) + 1)) + 1)) + 1
+    let right = extract(indexOf(blockInfo, ",", left))
+    take(drop(blockInfo, left), right - left)
+}
+
+func newAccount(pk: ByteVector, name: String) = [
+    DataEntry(keyAccountPrefix + name, pk.toBase58String()),
+    DataEntry(keyPubKeyPrefix + pk.toBase58String(), name),
+    DataEntry(name + "-balance", 5 * rude) # TODO можно оптимизировать и хранить в байтах через разделитель вместе с waves-адресом
+    # TODO вместо просто баланса хранить available и total балансы (с учетом газа в UTX, средств в свопе и лайтнинге)
+]
+
+func validate(script: String) = {
+    func send(code: String) = {
+        let comma = indexOf(code, ",")
+        if !isDefined(comma) then "send() must have two args: amount and recipient"
+        else
+            let rBrace = indexOf(drop(code, extract(comma) + 1), ")")
+            if !isDefined(rBrace) then "missing closing bracket"
+            else if drop(code, extract(comma) + 1).size() > extract(rBrace) + 1 then "unexpected code after ')'"
+            else
+                let amount = take(code, extract(comma)).parseInt()
+                let recipient = take(drop(code, extract(comma) + 1), extract(rBrace))
+
+                if !isDefined(amount) || extract(amount) < 1 then "amount must be a positive number"
+                else if !isDefined(getString(this, recipient)) then "recipient doesn't exist"
+                else ""
+    }
+
+    if isDefined(indexOf(script, " ")) then "script must not contain white spaces" # TODO убрать к BTC стилю. Пробел - разделитель
+    else if take(script, 5) == "send(" then
+        send(drop(script, 5))
+    # TODO atomic swap
+    # TODO lightning
+    else
+        "script starts from unknown command"
+}
+
+func estimate(script: String) = {
+    if take(script, 5) == "send(" then 1 # TODO может быть несколько операций - сендов или других
+    # TODO atomic swap
+    # TODO lightning
+    else 0
+}
+
+func evaluate(gas: Int, script: String) = {
+    func send(amount: Int, recipient: String) = {
+        "send" # TODO проверить баланс
+    }
+    func lightning() = {"lightning"} # TODO работа с лайтнинг каналом
+    func swap() = {"swap"} # TODO работа с atomic swap
+
+    if take(script, 5) == "send(" then
+        let args = drop(script, 5)
+        let comma = extract(indexOf(args, ","))
+        let rBrace = extract(indexOf(drop(args, comma + 1), ")"))
+
+        let amount = take(args, comma).parseIntValue()
+        let recipient = take(drop(args, comma + 1), rBrace)
+
+        send(amount, recipient)
+    # TODO atomic swap
+    # TODO lightning
+    else "script starts from unknown command"
+}
+
+func pErr(msg: String) = throw("Parse error: " + msg + "!")
+
 @Callable(i)
-func test() = {
-    WriteSet([])
+func genesis() = {
+    if i.caller != this then
+        throw("blockchain can be created only by the dApp")
+    else if isDefined(getString(this, keyLast))
+        || isDefined(getInteger(this, keyHeight))
+        || isDefined(getInteger(this, keyBase))
+        || isDefined(getInteger(this, keyUtx))
+        || isDefined(getInteger(this, keyUtxSize))
+    then
+        throw("blockchain is already created")
+    else
+        let gHeight = 0
+        let genesisBlock = "," + gHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + ",0"
+        WriteSet(
+            DataEntry(keyLast, genesisBlock) # TODO хранить потраченный суммарный газ транзакций отдельным полем
+            ::DataEntry(keyHeight, gHeight)
+            ::DataEntry(keyBase, 1)
+            ::DataEntry(keyUtx, "")
+            ::DataEntry(keyUtxSize, 0)
+            ::nil
+        )
+}
+
+@Callable(i)
+func register(name: String) = {
+    let callerPubKey = i.callerPublicKey.toBase58String()
+    let validChars = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+    if (!isDefined(i.payment) || isDefined(extract(i.payment).assetId) || extract(i.payment).amount != 500000000) then
+        throw("Registration costs 5 Waves!")
+    else if !(size(name) > 0 && size(name) <= 8 && isDefined(indexOf(validChars, take(name, 1)))
+        && (if (size(name) > 1) then isDefined(indexOf(validChars, take(drop(name, 1), 1))) else true)
+        && (if (size(name) > 2) then isDefined(indexOf(validChars, take(drop(name, 2), 1))) else true)
+        && (if (size(name) > 3) then isDefined(indexOf(validChars, take(drop(name, 3), 1))) else true)
+        && (if (size(name) > 4) then isDefined(indexOf(validChars, take(drop(name, 4), 1))) else true)
+        && (if (size(name) > 5) then isDefined(indexOf(validChars, take(drop(name, 5), 1))) else true)
+        && (if (size(name) > 6) then isDefined(indexOf(validChars, take(drop(name, 6), 1))) else true)
+        && (if (size(name) > 7) then isDefined(indexOf(validChars, take(drop(name, 7), 1))) else true))
+    then
+        throw("Account name must have [1..8] length and contain only [a-z0-9] chars")
+    else if isDefined(account(i.callerPublicKey)) then
+        throw("Public key of the caller is already registered as '" + extract(account(i.callerPublicKey)) + "'")
+    else if isDefined(pubKeyOf(name)) then
+        throw("Account name '" + name + "' is already taken")
+    else
+    #ScriptResult(
+        WriteSet(newAccount(i.callerPublicKey, name))
+    #    , TransferSet([ScriptTransfer(i.caller, 50, gasAsset)])
+    #)
+}
+
+@Callable(i)
+func mine() = {
+    # TODO для пазла должен быть нонс
+    let freq = 2 # TODO заменить на проверку выполнения пазла (кол-во нулей или что-то еще) с учетом текущей сложности
+
+    if i.caller == this then
+        throw("The dApp can't mine!")
+    else if height - blockReferenceHeight(-1) < freq then
+        throw("Can't mine more often than once every " + freq.toString() + " waves blocks")
+    else
+        let nextHeight = h() + 1
+        let liquidBlock = block(-1)
+        let liquidBlockHash = sha256(liquidBlock.toBytes()).toBase58String() # TODO Utf8 или toBase58? достаточно ли sha256? Попробовать blake и keccak
+
+        ScriptResult(
+            WriteSet([
+                DataEntry(h().toString(), liquidBlockHash + liquidBlock)
+                , DataEntry(keyHeight, nextHeight)
+                , DataEntry(keyBase, base() + 1) # TODO калибровать сложность (от высоты, на которой был смайнен прошлый блок). Какая скорость?
+                , DataEntry(keyLast, "," + nextHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + "," + liquidBlockHash)
+            ]),
+            TransferSet([]) # TODO отправить комиссии за прошлый блок прошлому майнеру и dApp.
+        )
+}
+
+@Callable(i)
+func utxProcessing() = {
+    if i.callerPublicKey != blockMinerPublicKey(-1).fromBase58String() then
+        throw("Only the current miner can processing UTX!")
+    else if getIntegerValue(this, keyUtxSize) == 0 then
+        WriteSet([]) # чтобы InvokeScript успешно прошел и за спам транзакции пришлось платить
+    else
+        let utx = getStringValue(this, keyUtx)
+        let marker = extract(indexOf(utx, ";"))
+        let tx = take(utx, marker - 1)
+
+        let txSignature = take(tx, extract(indexOf(tx, ",")))
+        let txSenderPublicKey = { let raw = drop(tx, txSignature.size() + 1); take(raw, extract(indexOf(raw, ","))) }
+        let txGas = { let raw = drop(tx, txSignature.size() + txSenderPublicKey.size() + 2); take(raw, extract(indexOf(raw, ","))) }
+        let txScript = drop(tx, txSignature.size() + txSenderPublicKey.size() + txGas.size() + 3)
+
+
+        WriteSet([DataEntry("a", "a")]) # TODO verify (наличие газа), evaluate, запомнить gas, положить tx в блок
+        # TODO если транзакции кончились или достигнут лимит транзакций за раз, то подтереть UTX и уменьшить size
+}
+
+@Callable(i)
+func transaction(signatureBase64: String, gas: Int, script: String) = {
+    let txBody = extract(account(i.callerPublicKey)) + "," + gas.toString() + "," + script
+
+    if i.caller == this then
+        throw("The dApp can't send transactions!")
+    else if !isDefined(getString(this, i.callerPublicKey.toBase58String())) then
+        throw("Only registered accounts can send transactions!")
+    else if !(getIntegerValue(this, keyUtxSize) < utxLimit) then
+        throw("UTX size limit reached! Please try later")
+    else if !sigVerify(txBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then
+        throw("Incorrect signature!")
+    else
+        let message = validate(script)
+        if message.size() > 0 then pErr(message)
+        else if !(gas > 0) then # TODO проверить, в наличии ли столько
+            throw("Gas amount must be positive!")
+        else
+            let gasRequired = estimate(script)
+            if gas < gasRequired then
+                throw("Not enough gas: " + gas.toString() + " but " + gasRequired.toString() + " estimated")
+        else
+            let utxPool = getStringValue(this, keyUtx)
+            WriteSet([
+                DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";")
+                , DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1)
+            ])
+}
+
+# TODO func faucet для тестов
+
+@Verifier(tx)
+func verify() = {
+    #match tx {
+    #    case d:DataTransaction => false # blockchain can be changed only via dApp actions
+    #    case t:TransferTransaction => !isDefined(t.assetId) # TODO ведь так проверять на вавесность?
+    #    # TODO для SetScript - мультисиг с китами в блокчейне
+    #    case _ => sigVerify(tx.bodyBytes, tx.proofs[0], dappPublicKey)
+    #}
+    true
 }

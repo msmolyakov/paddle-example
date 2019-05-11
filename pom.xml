@@ -28,13 +28,6 @@
         </plugins>
     </build>
 
-    <repositories>
-		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
-		</repository>
-	</repositories>
-
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -42,16 +35,10 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-        <!-- <dependency>
+        <dependency>
             <groupId>com.wavesplatform</groupId>
             <artifactId>wavesj</artifactId>
-            <version>0.14</version>
-            <scope>test</scope>
-        </dependency> -->
-        <dependency>
-            <groupId>com.github.wavesplatform</groupId>
-            <artifactId>WavesJ</artifactId>
-            <version>proofs-fix-SNAPSHOT</version>
+            <version>0.14.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

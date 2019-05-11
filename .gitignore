@@ -5,3 +5,7 @@
 
 out/
 target/
+
+.classpath
+.project
+*.prefs

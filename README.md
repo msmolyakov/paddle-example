@@ -16,3 +16,5 @@ TODO:
 * support in IntelliJ plugin
 * what will be on release new version of node or WavesJ
 * is local.conf works and needed?
+* multi-stage build
+* autobuild on Docker Hub

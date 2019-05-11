@@ -1,28 +1,29 @@
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.exceptions.DockerCertificateException;
 import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.*;
 import com.wavesplatform.wavesj.Node;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
+import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
+import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.FunctionCall;
+import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.Payment;
 import com.wavesplatform.wavesj.transactions.TransferTransaction;
-import com.wavesplatform.wavesj.transactions.TransferTransactionV2;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 import static com.wavesplatform.wavesj.ByteString.EMPTY;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestSuite {
 
@@ -35,10 +36,9 @@ public class TestSuite {
     }
 
     @Before
-    public void before() throws DockerException, InterruptedException, DockerCertificateException, IOException {
-        docker = DefaultDockerClient.fromEnv().build();
-//        docker.pull("msmolyakov/waves-private-node:testnet"); //TODO from Docker Hub
-        docker.build(Paths.get("docker"));
+    public void before() throws DockerException, InterruptedException {
+        docker = new DefaultDockerClient("unix:///var/run/docker.sock");
+        docker.pull("msmolyakov/waves-private-node:testnet");
 
         String[] ports = {"6860", "6869"};
         Map<String, List<PortBinding>> portBindings = new HashMap<>();
@@ -52,15 +52,27 @@ public class TestSuite {
 
         ContainerConfig containerConfig = ContainerConfig.builder()
                 .hostConfig(hostConfig)
-                .image("pvt").exposedPorts(ports)
-//                .cmd("sh", "-c", "while :; do sleep 1; done") //TODO del
+                .image("msmolyakov/waves-private-node:testnet").exposedPorts(ports)
                 .build();
 
         ContainerCreation container = docker.createContainer(containerConfig);
         containerId = container.id();
 
-        System.out.println(containerId); //TODO del
         docker.startContainer(containerId);
+
+//        Thread.sleep(600000);
+
+        //wait node readiness
+        for (int repeat = 0; repeat < 10; repeat++) {
+            try {
+                System.out.println(node.getVersion());
+                break;
+            } catch (IOException e) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ignore) {}
+            }
+        }
 
         // Exec command inside running container with attached STDOUT and STDERR
         /*String[] command = {"sh", "-c", "ls"};
@@ -76,10 +88,24 @@ public class TestSuite {
         PrivateKeyAccount rich = PrivateKeyAccount.fromSeed("rich", 0, (byte) 'R');
         PrivateKeyAccount alice = PrivateKeyAccount.fromSeed("alice", 0, (byte) 'R');
 
-        String transferTxId = node.transfer(rich, alice.getAddress(), 1000_00000000L, 100000, EMPTY);
-        Transaction transfer = waitForTransaction(transferTxId);
+        Transaction transfer = waitForTransaction(node.transfer(
+                rich, alice.getAddress(), 1000_00000000L, 100000, EMPTY));
 
-        assertEquals(node.getBalance(alice.getAddress()), ((TransferTransaction) transfer).getAmount());
+        Transaction setScript = waitForTransaction(node.setScript(alice,
+                new String(Files.readAllBytes(Paths.get("dapp.ride"))), (byte) 'R', 1000000));
+
+        //TODO ничо не сделать до генезиса
+
+        Transaction genesis = waitForTransaction(node.send(new InvokeScriptTransaction((byte) 'R',
+                alice, alice.getAddress(), new FunctionCall("genesis"), new ArrayList<>(),
+                500000, "WAVES", System.currentTimeMillis(), new ArrayList<>()).sign(alice)));
+
+        assertEquals(node.getData(alice.getAddress()).size(), 5);
+        assertTrue(((String) node.getDataByKey(alice.getAddress(), "last").getValue()).startsWith(","));
+        assertEquals(((long) node.getDataByKey(alice.getAddress(), "height").getValue()), 0);
+        assertEquals(((long) node.getDataByKey(alice.getAddress(), "base").getValue()), 1);
+        assertEquals(node.getDataByKey(alice.getAddress(), "utx").getValue(), "");
+        assertEquals(((long) node.getDataByKey(alice.getAddress(), "utx-size").getValue()), 0);
     }
 
     Transaction waitForTransaction(String id) throws TimeoutException {
@@ -94,6 +120,8 @@ public class TestSuite {
         }
         throw new TimeoutException("Could not wait for transaction " + id + " in 10 seconds");
     }
+
+
 
     @After
     public void after() throws DockerException, InterruptedException {
