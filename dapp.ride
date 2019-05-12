@@ -3,20 +3,25 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 # TODO client:
-# auth & register if not
 # sign & send tx
-# overview: utx size, base, height
 # utx view
 # blocks list (+ hide empty)
 # block view (+ txs list)
 # tx view
 # account view
+# курс на DEX
 
 # TODO miner:
 # provide seed
 # monitor base and height => restart mining thread on new
 # calculate zero bytes
 # show rewards and balance
+
+# TODO dApp:
+# gateway
+# NFT
+# lightning
+# multiple commands
 
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
@@ -121,6 +126,7 @@ func evaluate(script: String) = {
     else throw("can't evaluate script") # unreachable state because validated
 }
 
+# TODO несколько команд!
 func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
     let words = script.split(" ")
 
