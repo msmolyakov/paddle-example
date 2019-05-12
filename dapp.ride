@@ -34,11 +34,24 @@ func blockMinerPublicKey(h: Int) = {
     let right = extract(indexOf(blInfo, ",", left))
     take(drop(blInfo, left), right - left)
 }
-func blockGazReward(h: Int) = {
+func blockPrevHash(h: Int) = {
+    let blInfo = blockInfo(h)
+    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1)) + 1
+    let right = extract(indexOf(blInfo, ",", left))
+    take(drop(blInfo, left), right - left)
+}
+func blockGasReward(h: Int) = {
     let blInfo = blockInfo(h)
     let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1)) + 1)) + 1
     let right = extract(indexOf(blInfo, ",", left))
-    take(drop(blInfo, left), right - left)
+    take(drop(blInfo, left), right - left).parseIntValue()
+}
+func blockTxs(h: Int) = {
+    let blInfo = blockInfo(h)
+    let semicolon = indexOf(blInfo, ";")
+    if isDefined(semicolon) then
+        drop(blInfo, extract(semicolon) + 1)
+    else ""
 }
 
 func pubKey(pk: ByteVector) = pk.toBase58String()
@@ -49,9 +62,8 @@ func isTaken(acc: String) = isDefined(accountInfo(acc))
 
 func pubKeyOf(account: String) = {
     let accInfo = extract(accountInfo(account))
-    let left = 0
-    let right = extract(indexOf(accInfo, ",", left))
-    take(drop(accInfo, left), right - left)
+    let right = extract(indexOf(accInfo, ","))
+    take(accInfo, right)
 }
 func regHeightOf(account: String) = {
     let accInfo = extract(accountInfo(account))
@@ -72,47 +84,48 @@ func availableBalanceOf(account: String) = {
     take(drop(accInfo, left), right - left).parseIntValue()
 }
 
-func validate(script: String) = {
-    let words = script.split(" ") # TODO разделитель для команд
-    func send(recipient: String, amount: Int) = {
-        if amount < 1 then "amount " + amount.toString() + " must be a positive number"
-        else if !isTaken(recipient) then "recipient '" + recipient + "' doesn't exist"
-        else ""
-    }
-
-    if words.size() < 3 then "unknown script format" # TODO 3? 2? 4?
-    else
-        if words[0] == "send" then
-            send(words[1], words[2].parseIntValue())
-        # TODO atomic swap
-        # TODO lightning
-        else
-            "script starts from unknown command"
-}
-
 func estimate(script: String) = {
     let words = script.split(" ")
-    if words[0] == "send" then 1 # TODO может быть 5 операций - сендов или других
-    # TODO atomic swap
-    # TODO lightning
-    # TODO NFT
-    else 0
+
+    if words[0] == "SEND" then
+        let gasRequired = 1
+        let amount = words[2].parseIntValue()
+        [gasRequired, amount]
+    else [1000000, 0]
 }
 
-func evaluate(gas: Int, script: String) = {
+func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
+    let words = script.split(" ")
+
+    if words[0] == "SEND" then
+        if words.size() != 3 then "SEND command expects args: recipient amount"
+        else
+            let gasRequired = estimate(script)[0]
+            let recipient = words[1]
+            let amount = words[2].parseIntValue()
+
+            if !isTaken(recipient) then "recipient '" + recipient + "' doesn't exist"
+            else if recipient == acc then "sender can't do SEND to itself"
+            else if amount < 1 then "amount " + amount.toString() + " must be a positive number"
+            else if !(gas > 0) then "Gas amount must be positive!"
+            else if gas < gasRequired then "Not enough gas: actual " + gas.toString() + " but " + gasRequired.toString() + " estimated"
+            else if checkBalance && availableBalanceOf(acc) < gas + amount then "Not enough available balance for payment and gas"
+            else ""
+    else
+        "unknown command " + words[0]
+}
+
+func evaluate(script: String) = {
     let words = script.split(" ")
     func send(recipient: String, amount: Int) = {
-        "send" # TODO проверить баланс
+        DataEntry(keyAccountPrefix + recipient, pubKeyOf(recipient) + "," + regHeightOf(recipient).toString() + "," 
+            + (totalBalanceOf(recipient) + amount).toString() + "," + (availableBalanceOf(recipient) + amount).toString())
     }
-    #func lightning() = {"lightning"} # TODO работа с лайтнинг каналом
-    #func swap() = {"swap"} # TODO работа с atomic swap
 
     if words[0] == "send" then
         send(words[1], words[2].parseIntValue())
     else WriteSet([]) # недостижимое состояние
 }
-
-func pErr(msg: String) = throw("Parse error: " + msg + "!")
 
 #TODO del
 @Callable(i)
@@ -142,7 +155,7 @@ func genesis() = {
     else
         let gHeight = 0
         # blockHash (omitted here), height, ref height, miner pK, prevBlockHash, gaz used in txs, txs (omitted here)
-        let genesisBlock = "," + gHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + ",0,0,"
+        let genesisBlock = "," + gHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + ",0,0"
         WriteSet(
             DataEntry(keyLast, genesisBlock)
             ::DataEntry(keyHeight, gHeight)
@@ -191,10 +204,8 @@ func mine() = {
     let freq = 2 # TODO заменить на проверку выполнения пазла (кол-во нулей или что-то еще) с учетом текущей сложности
 
     # TODO майнер должен быть зареган
-    if i.caller == this then
-        throw("The dApp can't mine!")
-    else if height - blockReferenceHeight(-1) < freq then
-        throw("Can't mine more often than once every " + freq.toString() + " waves blocks")
+    if i.caller == this then throw("The dApp can't mine!")
+    else if height - blockReferenceHeight(-1) < freq then throw("Can't mine more often than once every " + freq.toString() + " waves blocks")
     else
         let nextHeight = h() + 1
         let liquidBlock = blockInfo(-1) # TODO брать хэш только от значений, без запятых?
@@ -212,58 +223,63 @@ func mine() = {
 }
 
 # TODO ПРОВЕРЯТЬ БАЛАНС И SEND!
-# TODO учитывать в availableBalance газ в UTX, средства в свопе и лайтнинге
+# TODO учитывать в availableBalance газ в UTX
 @Callable(i)
 func utxProcessing() = {
-    if i.callerPublicKey != blockMinerPublicKey(-1).fromBase58String() then
-        throw("Only the current miner can processing UTX!")
-    else if getIntegerValue(this, keyUtxSize) == 0 then
-        WriteSet([]) # чтобы InvokeScript успешно прошел и за спам транзакции пришлось платить
+    if i.callerPublicKey != blockMinerPublicKey(-1).fromBase58String() then throw("Only the current miner can processing UTX!")
+    else if getIntegerValue(this, keyUtxSize) == 0 then WriteSet([])
     else
         let utx = getStringValue(this, keyUtx)
+        let utxSize = getIntegerValue(this, keyUtxSize)
         let marker = extract(indexOf(utx, ";"))
-        let tx = take(utx, marker - 1)
+        let tx = take(utx, marker)
 
         let txSignature = take(tx, extract(indexOf(tx, ",")))
         let txSenderPublicKey = { let raw = drop(tx, txSignature.size() + 1); take(raw, extract(indexOf(raw, ","))) }
         let txGas = { let raw = drop(tx, txSignature.size() + txSenderPublicKey.size() + 2); take(raw, extract(indexOf(raw, ","))) }
         let txScript = drop(tx, txSignature.size() + txSenderPublicKey.size() + txGas.size() + 3)
 
-        # TODO evaluate!
+        let txSenderAcc = extract(accountOf(txSenderPublicKey.toBytes()))
+        let validation = validate(txSenderAcc, txGas.parseIntValue(), txScript, false)
+        let costs = estimate(txScript)
 
-        WriteSet([DataEntry("a", "a")]) # TODO verify (наличие газа), evaluate, запомнить gas, положить tx в блок
-        # TODO если транзакции кончились или достигнут лимит транзакций за раз, то подтереть UTX и уменьшить size
+        if validation.size() > 0 then 
+            WriteSet([DataEntry(keyUtxSize, utxSize - 1), DataEntry(keyUtx, drop(utx, marker + 1))])
+        else
+            WriteSet(
+                DataEntry(keyLast, "," + h().toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerPublicKey(-1) + "," 
+                    + blockPrevHash(-1) + "," + (blockGasReward(-1) + costs[0]).toString() + blockTxs(-1) + ";" + tx)
+                ::DataEntry(keyUtxSize, utxSize - 1)
+                ::DataEntry(keyUtx, drop(utx, marker + 1))
+                ::evaluate(txScript)
+                ::DataEntry( keyAccountPrefix + txSenderAcc, txSenderPublicKey + "," + regHeightOf(txSenderAcc).toString() + "," 
+                    + (totalBalanceOf(txSenderAcc) - costs[0] - costs[1]).toString() + "," 
+                    + (availableBalanceOf(txSenderAcc) + txGas.parseIntValue() - costs[0]).toString() )
+                ::nil
+            )
 }
 
 @Callable(i)
 func transaction(signatureBase64: String, gas: Int, script: String) = {
-    if i.caller == this then
-        throw("The dApp can't send transactions!")
-    else if !isRegistered(i.callerPublicKey) then
-        throw("Only registered accounts can send transactions!")
-    else if !(getIntegerValue(this, keyUtxSize) < utxLimit) then
-        throw("UTX size limit reached! Please try later")
+    if i.caller == this then throw("The dApp can't send transactions!")
+    else if !isRegistered(i.callerPublicKey) then throw("Only registered accounts can send transactions!")
+    else if !(getIntegerValue(this, keyUtxSize) < utxLimit) then throw("UTX size limit reached! Please try later")
     else
         let txBody = extract(accountOf(i.callerPublicKey)) + "," + gas.toString() + "," + script
-        let message = validate(script) # TODO ПРОВЕРЯТЬ БАЛАНС И SEND!
+        let acc = extract(accountOf(i.callerPublicKey))
+        let validation = validate(acc, gas, script)
+        let costs = estimate(script)
+        let reserved = costs[0] + costs[1]
 
-        if !sigVerify(txBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then
-            throw("Incorrect signature!")
-        else if message.size() > 0 then pErr(message)
-        else if !(gas > 0) then
-            throw("Gas amount must be positive!")
-        else if availableBalanceOf(extract(accountOf(i.callerPublicKey))) < gas then
-            throw("Not enough balance for payment")
-        else
-            let gasRequired = estimate(script)
-            if gas < gasRequired then
-                throw("Not enough gas: actual " + gas.toString() + " but " + gasRequired.toString() + " estimated")
+        if validation.size() > 0 then throw(validation)
+        else if !sigVerify(txBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then throw("Incorrect signature!")
         else
             let utxPool = getStringValue(this, keyUtx)
             WriteSet([
                 DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";"),
-                DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1)
-                # TODO availBalance -= gaz
+                DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1),
+                DataEntry(keyAccountPrefix + acc, pubKeyOf(acc) + "," + regHeightOf(acc).toString() + "," + totalBalanceOf(acc).toString() + "," 
+                    + (availableBalanceOf(acc) - reserved[0]).toString())
             ])
 }
 
