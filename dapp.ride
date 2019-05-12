@@ -21,7 +21,7 @@ let initBalance = 1 * rude
 func h() = getIntegerValue(this, keyHeight)
 func base() = getIntegerValue(this, keyBase)
 
-func blockInfo(h: Int) = getStringValue(this, if h == -1 then keyLast else h.toString())
+func blockInfo(h: Int) = getStringValue(this, if h == -1 || h == h() then keyLast else h.toString())
 func blockReferenceHeight(h: Int) = {
     let blInfo = blockInfo(h)
     let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1
@@ -94,6 +94,18 @@ func estimate(script: String) = {
     else [1000000, 0]
 }
 
+func evaluate(script: String) = {
+    let words = script.split(" ")
+    func send(recipient: String, amount: Int) = {
+        DataEntry(keyAccountPrefix + recipient, pubKeyOf(recipient) + "," + regHeightOf(recipient).toString() + "," 
+            + (totalBalanceOf(recipient) + amount).toString() + "," + (availableBalanceOf(recipient) + amount).toString())
+    }
+
+    if words[0] == "SEND" then
+        send(words[1], words[2].parseIntValue())
+    else throw("unreachable state")
+}
+
 func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
     let words = script.split(" ")
 
@@ -113,18 +125,6 @@ func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
             else ""
     else
         "unknown command " + words[0]
-}
-
-func evaluate(script: String) = {
-    let words = script.split(" ")
-    func send(recipient: String, amount: Int) = {
-        DataEntry(keyAccountPrefix + recipient, pubKeyOf(recipient) + "," + regHeightOf(recipient).toString() + "," 
-            + (totalBalanceOf(recipient) + amount).toString() + "," + (availableBalanceOf(recipient) + amount).toString())
-    }
-
-    if words[0] == "send" then
-        send(words[1], words[2].parseIntValue())
-    else WriteSet([]) # недостижимое состояние
 }
 
 #TODO del
@@ -166,7 +166,6 @@ func genesis() = {
         )
 }
 
-# TODO может рега только за майнинг блока?
 @Callable(i)
 func register(name: String) = {
     let callerPubKey = i.callerPublicKey.toBase58String()
@@ -196,34 +195,36 @@ func register(name: String) = {
         ])
 }
 
-# TODO плавно снижать награду за блок, чтобы через N блоков осталась только комиссия за транзы
-# TODO нельзя майнить на той же высоте, что и текущий блок
+# TODO везде не доверять caller.publicKey - проверять подпись
+# TODO плавно снижать до 0 награду за блок и увеличивать % от газа до 100, чтобы через N блоков осталась только комиссия за транзы
 @Callable(i)
 func mine() = {
     # TODO для пазла должен быть нонс
     let freq = 2 # TODO заменить на проверку выполнения пазла (кол-во нулей или что-то еще) с учетом текущей сложности
 
-    # TODO майнер должен быть зареган
     if i.caller == this then throw("The dApp can't mine!")
-    else if height - blockReferenceHeight(-1) < freq then throw("Can't mine more often than once every " + freq.toString() + " waves blocks")
+    else if !isRegistered(i.callerPublicKey) then throw("Miner must be registered!")
+    else if height - blockReferenceHeight(-1) < freq then throw("Can't mine more often than once every " + freq.toString() + " waves blocks") # TODO проверять пазл на base
     else
+        let minerAccount = extract(accountOf(i.callerPublicKey))
         let nextHeight = h() + 1
-        let liquidBlock = blockInfo(-1) # TODO брать хэш только от значений, без запятых?
+        let liquidBlock = h().toString() + blockReferenceHeight(-1).toString() + blockMinerPublicKey(-1) + blockPrevHash(-1) + blockGasReward(-1).toString() + blockTxs(-1)
         let liquidBlockHash = sha256(liquidBlock.toBytes()).toBase58String() # TODO Utf8 или toBase58? достаточно ли sha256? Попробовать blake и keccak
 
-        ScriptResult(
-            WriteSet([
-                DataEntry(h().toString(), liquidBlockHash + liquidBlock)
-                , DataEntry(keyHeight, nextHeight)
-                , DataEntry(keyBase, base() + 1) # TODO калибровать сложность (от высоты, на которой был смайнен прошлый блок). Какая скорость?
-                , DataEntry(keyLast, "," + nextHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey))
-            ]),
-            TransferSet([]) # TODO отправить комиссии за прошлый блок прошлому майнеру и dApp.
-        )
+        WriteSet([
+            # TODO везде не парсить разделители, а делать split()
+            # TODO вместо available хранить reserved?
+            DataEntry(keyAccountPrefix + minerAccount, pubKeyOf(minerAccount) + "," + regHeightOf(minerAccount).toString() + "," 
+                + (totalBalanceOf(minerAccount) + blockGasReward(-1)).toString() + "," + (availableBalanceOf(minerAccount) + blockGasReward(-1)).toString())
+            , DataEntry(h().toString(), liquidBlockHash + blockInfo(-1))
+            , DataEntry(keyHeight, nextHeight)
+            , DataEntry(keyBase, base() + 1) # TODO калибровать сложность (от высоты, на которой был смайнен прошлый блок). Какая скорость?
+            # везде хранить не паблик кеи, а аккаунты
+            # методы-конструкторы для аккаунта, блока, транзакции
+            , DataEntry(keyLast, "," + nextHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + "," + liquidBlockHash + ",0")
+        ])
 }
 
-# TODO ПРОВЕРЯТЬ БАЛАНС И SEND!
-# TODO учитывать в availableBalance газ в UTX
 @Callable(i)
 func utxProcessing() = {
     if i.callerPublicKey != blockMinerPublicKey(-1).fromBase58String() then throw("Only the current miner can processing UTX!")
@@ -267,7 +268,7 @@ func transaction(signatureBase64: String, gas: Int, script: String) = {
     else
         let txBody = extract(accountOf(i.callerPublicKey)) + "," + gas.toString() + "," + script
         let acc = extract(accountOf(i.callerPublicKey))
-        let validation = validate(acc, gas, script)
+        let validation = validate(acc, gas, script, true)
         let costs = estimate(script)
         let reserved = costs[0] + costs[1]
 
@@ -279,7 +280,7 @@ func transaction(signatureBase64: String, gas: Int, script: String) = {
                 DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";"),
                 DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1),
                 DataEntry(keyAccountPrefix + acc, pubKeyOf(acc) + "," + regHeightOf(acc).toString() + "," + totalBalanceOf(acc).toString() + "," 
-                    + (availableBalanceOf(acc) - reserved[0]).toString())
+                    + (availableBalanceOf(acc) - reserved).toString())
             ])
 }
 
