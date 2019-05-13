@@ -3,17 +3,18 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 # TODO client:
+# balances
 # sign & send tx
 # utx view
 # blocks list (+ hide empty)
 # block view (+ txs list)
 # tx view
 # account view
-# курс на DEX
+# курс на DEX (тикер!)
 
 # TODO miner:
 # provide seed
-# monitor base and height => restart mining thread on new
+# monitor height => recalculate base and restart mining thread on new
 # calculate zero bytes
 # show rewards and balance
 
@@ -22,16 +23,16 @@
 # NFT
 # lightning
 # multiple commands
+# fixed point
 
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
-let keyBase = "base"
 let keyHeight = "height"
 let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
 
-let dappPublicKey = base58'5AzfA9UfpWVYiwFwvdr77k6LWupSTGLb14b24oVdEpMM' # TODO выставить в конце!
+let dappPublicKey = base58'' # TODO SET!
 
 let registrationCost = 5
 let utxLimit = 100
@@ -39,34 +40,19 @@ let blockMinerReward = 20
 let initBalance = 5
 
 func h() = getIntegerValue(this, keyHeight)
-func base() = getIntegerValue(this, keyBase)
 
 func blockInfo(h: Int) = getStringValue(this, if h == -1 || h == h() then keyLast else h.toString())
-func blockReferenceHeight(h: Int) = {
-    let blInfo = blockInfo(h)
-    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1
-    let right = extract(indexOf(blInfo, ",", left))
-    take(drop(blInfo, left), right - left).parseIntValue()
-}
-func blockMinerPublicKey(h: Int) = {
-    let blInfo = blockInfo(h)
-    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1
-    let right = extract(indexOf(blInfo, ",", left))
-    take(drop(blInfo, left), right - left)
-}
-func blockPrevHash(h: Int) = {
-    let blInfo = blockInfo(h)
-    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1)) + 1
-    let right = extract(indexOf(blInfo, ",", left))
-    take(drop(blInfo, left), right - left)
-}
-func blockGasReward(h: Int) = {
-    let blInfo = blockInfo(h)
-    let left = extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",", extract(indexOf(blInfo, ",")) + 1)) + 1)) + 1)) + 1)) + 1
-    let right = extract(indexOf(blInfo, ",", left))
-    take(drop(blInfo, left), right - left).parseIntValue()
-}
-func blockTxs(h: Int) = {
+func blockHeaders(h: Int) = blockInfo(h).split(";")[0].split(",")
+
+func blockHash(h: Int) = blockHeaders(h)[0]
+func blockTimestamp(h: Int) = blockHeaders(h)[1].parseIntValue()
+func blockReferenceHeight(h: Int) = blockHeaders(h)[2].parseIntValue()
+func blockMinerPublicKey(h: Int) = blockHeaders(h)[3] # TODO account?
+func blockNonce(h: Int) = blockHeaders(h)[4].parseIntValue()
+func blockPrevHash(h: Int) = blockHeaders(h)[5]
+func blockDifficulty(h: Int) = blockHeaders(h)[6].parseIntValue()
+func blockGasReward(h: Int) = blockHeaders(h)[7].parseIntValue()
+func blockTxs(h: Int) = { # TODO List
     let blInfo = blockInfo(h)
     let semicolon = indexOf(blInfo, ";")
     if isDefined(semicolon) then
@@ -75,34 +61,15 @@ func blockTxs(h: Int) = {
 }
 
 func pubKey(pk: ByteVector) = pk.toBase58String()
-func accountOf(pk: ByteVector) = getString(this, keyPubKeyPrefix + pubKey(pk))
-func accountInfo(name: String) = getString(this, keyAccountPrefix + name)
-func isRegistered(pK: ByteVector) = isDefined(accountOf(pK))
-func isTaken(acc: String) = isDefined(accountInfo(acc))
+func isRegistered(pK: ByteVector) = isDefined(getString(this, keyPubKeyPrefix + pubKey(pK)))
+func isTaken(name: String) = isDefined(getString(this, keyAccountPrefix + name))
+func accountOf(pK: ByteVector) = getStringValue(this, keyPubKeyPrefix + pubKey(pK))
+func accountInfo(name: String) = getStringValue(this, keyAccountPrefix + name).split(",")
 
-func pubKeyOf(account: String) = {
-    let accInfo = extract(accountInfo(account))
-    let right = extract(indexOf(accInfo, ","))
-    take(accInfo, right)
-}
-func regHeightOf(account: String) = {
-    let accInfo = extract(accountInfo(account))
-    let left = extract(indexOf(accInfo, ",")) + 1
-    let right = extract(indexOf(accInfo, ",", left))
-    take(drop(accInfo, left), right - left).parseIntValue()
-}
-func totalBalanceOf(account: String) = {
-    let accInfo = extract(accountInfo(account))
-    let left = extract(indexOf(accInfo, ",", extract(indexOf(accInfo, ",")) + 1)) + 1
-    let right = extract(indexOf(accInfo, ",", left))
-    take(drop(accInfo, left), right - left).parseIntValue()
-}
-func availableBalanceOf(account: String) = {
-    let accInfo = extract(accountInfo(account))
-    let left = extract(indexOf(accInfo, ",", extract(indexOf(accInfo, ",", extract(indexOf(accInfo, ",")) + 1)) + 1)) + 1
-    let right = accInfo.size()
-    take(drop(accInfo, left), right - left).parseIntValue()
-}
+func pubKeyOf(account: String) = accountInfo(account)[0]
+func regHeightOf(account: String) = accountInfo(account)[1].parseIntValue()
+func totalBalanceOf(account: String) = accountInfo(account)[2].parseIntValue()
+func availableBalanceOf(account: String) = accountInfo(account)[3].parseIntValue()
 
 func estimate(script: String) = {
     let words = script.split(" ")
@@ -148,43 +115,25 @@ func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
         "unknown command " + words[0]
 }
 
-#TODO del
-@Callable(i)
-func unitTest() = {
-    #let accName = "bob1"
-    #WriteSet([
-    #    DataEntry("pK", pubKeyOf(accName)),
-    #    DataEntry("hei", regHeightOf(accName)),
-    #    DataEntry("tB", totalBalanceOf(accName)),
-    #    DataEntry("aB", availableBalanceOf(accName))
-    #])
-
-    WriteSet([DataEntry("genRefH", blockReferenceHeight(-1)), DataEntry("genMinerK", blockMinerPublicKey(-1))])
-}
-
 @Callable(i)
 func genesis() = {
     if i.caller != this then
-        throw("blockchain can be created only by the dApp")
+        throw("Rudechain can be created only by the dApp")
     else if isDefined(getString(this, keyLast))
         || isDefined(getInteger(this, keyHeight))
-        || isDefined(getInteger(this, keyBase))
         || isDefined(getInteger(this, keyUtx))
         || isDefined(getInteger(this, keyUtxSize))
     then
-        throw("blockchain is already created")
+        throw("Rudechain is already created")
     else
         let gHeight = 0
-        # blockHash (omitted here), height, ref height, miner pK, prevBlockHash, gaz used in txs, txs (omitted here)
-        let genesisBlock = "," + gHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + ",0,0"
-        WriteSet(
-            DataEntry(keyLast, genesisBlock)
-            ::DataEntry(keyHeight, gHeight)
-            ::DataEntry(keyBase, 1)
-            ::DataEntry(keyUtx, "")
-            ::DataEntry(keyUtxSize, 0)
-            ::nil
-        )
+        let genesisBlock = "0," + lastBlock.timestamp.toString() + "," + gHeight.toString() + "," + toBase58String(i.callerPublicKey) + ",0,0,0"
+        WriteSet([
+            DataEntry(keyLast, genesisBlock),
+            DataEntry(keyHeight, gHeight),
+            DataEntry(keyUtx, ""),
+            DataEntry(keyUtxSize, 0)
+        ])
 }
 
 @Callable(i)
@@ -205,7 +154,7 @@ func register(name: String) = {
     then
         throw("Account name must have [1..8] length and contain only [a-z0-9] chars")
     else if isRegistered(i.callerPublicKey) then
-        throw("Public key of the caller is already registered as '" + extract(accountOf(i.callerPublicKey)) + "'")
+        throw("Public key of the caller is already registered as '" + accountOf(i.callerPublicKey) + "'")
     else if isTaken(name) then
         throw("Account name '" + name + "' is already taken")
     else
@@ -218,31 +167,65 @@ func register(name: String) = {
 
 # TODO везде не доверять caller.publicKey - проверять подпись
 # TODO плавно снижать до 0 награду за блок и увеличивать % от газа до 100, чтобы через N блоков осталась только комиссия за транзы
+# TODO вместо available хранить reserved?
+# TODO везде хранить не паблик кеи, а аккаунты
 @Callable(i)
-func mine() = {
-    # TODO для пазла должен быть нонс
-    let freq = 2 # TODO заменить на проверку выполнения пазла (кол-во нулей или что-то еще) с учетом текущей сложности
+func mine(nonce: Int) = {
+    let delta = lastBlock.height - blockReferenceHeight(-1)
+    let difficulty = blockDifficulty(-1)
+    let newDifficulty = if delta == 1 then difficulty + 2 else if delta == 2 || delta == 3 || difficulty == 1 then difficulty else difficulty - 1
+
+    let hash = sha256((
+        lastBlock.timestamp.toString()
+        + lastBlock.height.toString()
+        + i.callerPublicKey.toBase58String()
+        + nonce.toString()
+        + blockPrevHash(-1)
+    ).toBytes()) # TODO Utf8 или toBase58? достаточно ли sha256? Попробовать blake и keccak, как в TxId
+
+    let byte0LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(take(hash, 1)))
+    let byte1LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 2), 1)))
+    let byte2LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 3), 1)))
+    let byte3LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 4), 1)))
+    let byte4LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 5), 1)))
+    let byte5LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 6), 1)))
+    let byte6LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 7), 1)))
+    let byte7LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 8), 1)))
+
+    let firstZeroBits = if byte0LeadingZeros != 8 then byte0LeadingZeros else ( 8 +
+                        if byte1LeadingZeros != 8 then byte1LeadingZeros else ( 8 +
+                        if byte2LeadingZeros != 8 then byte2LeadingZeros else ( 8 +
+                        if byte3LeadingZeros != 8 then byte3LeadingZeros else ( 8 +
+                        if byte4LeadingZeros != 8 then byte4LeadingZeros else ( 8 +
+                        if byte5LeadingZeros != 8 then byte5LeadingZeros else ( 8 +
+                        if byte6LeadingZeros != 8 then byte6LeadingZeros else ( 8 + 
+                                                        byte7LeadingZeros)))))))
 
     if i.caller == this then throw("The dApp can't mine!")
     else if !isRegistered(i.callerPublicKey) then throw("Miner must be registered!")
-    else if height - blockReferenceHeight(-1) < freq then throw("Can't mine more often than once every " + freq.toString() + " waves blocks") # TODO проверять пазл на base
+    else if delta == 0 then throw("Can't mine on same reference height as last block: " + lastBlock.height.toString())
+    else if firstZeroBits < newDifficulty then throw("Hash has " + firstZeroBits.toString() + " difficulty but " + newDifficulty.toString() + " required")
     else
-        let minerAccount = extract(accountOf(i.callerPublicKey))
-        let nextHeight = h() + 1
-        let liquidBlock = h().toString() + blockReferenceHeight(-1).toString() + blockMinerPublicKey(-1) + blockPrevHash(-1) + blockGasReward(-1).toString() + blockTxs(-1)
-        let liquidBlockHash = sha256(liquidBlock.toBytes()).toBase58String() # TODO Utf8 или toBase58? достаточно ли sha256? Попробовать blake и keccak
+        let prevMinerAccount = blockMinerPublicKey(-1)
+        let newMinerAccount = accountOf(i.callerPublicKey)
+        let newHeight = h() + 1
+        let newBlock = hash.toBase58String()
+            + "," + lastBlock.timestamp.toString() 
+            + "," + lastBlock.height.toString() 
+            + "," + i.callerPublicKey.toBase58String() 
+            + "," + nonce.toString() 
+            + "," + blockPrevHash(-1)
+            + "," + newDifficulty.toString()
+            + ",0"
 
         WriteSet([
-            # TODO везде не парсить разделители, а делать split()
-            # TODO вместо available хранить reserved?
-            DataEntry(keyAccountPrefix + minerAccount, pubKeyOf(minerAccount) + "," + regHeightOf(minerAccount).toString() + "," 
-                + (totalBalanceOf(minerAccount) + blockGasReward(-1)).toString() + "," + (availableBalanceOf(minerAccount) + blockGasReward(-1)).toString())
-            , DataEntry(h().toString(), liquidBlockHash + blockInfo(-1))
-            , DataEntry(keyHeight, nextHeight)
-            , DataEntry(keyBase, base() + 1) # TODO калибровать сложность (от высоты, на которой был смайнен прошлый блок). Какая скорость?
-            # везде хранить не паблик кеи, а аккаунты
-            # методы-конструкторы для аккаунта, блока, транзакции
-            , DataEntry(keyLast, "," + nextHeight.toString() + "," + height.toString() + "," + toBase58String(i.callerPublicKey) + "," + liquidBlockHash + ",0")
+            DataEntry(keyHeight, newHeight),
+            DataEntry(keyAccountPrefix + prevMinerAccount, pubKeyOf(prevMinerAccount) + "," + regHeightOf(prevMinerAccount).toString() + "," 
+                + (totalBalanceOf(prevMinerAccount) + blockGasReward(-1)).toString() + "," + (availableBalanceOf(prevMinerAccount) + blockGasReward(-1)).toString()),
+            DataEntry(h().toString(), blockInfo(-1)),
+            DataEntry(keyAccountPrefix + newMinerAccount, pubKeyOf(newMinerAccount) + "," + regHeightOf(newMinerAccount).toString() + "," 
+                + (totalBalanceOf(newMinerAccount) + blockMinerReward).toString() + "," + (availableBalanceOf(newMinerAccount) + blockMinerReward).toString()),
+            DataEntry(keyLast, newBlock)
         ])
 }
 
@@ -261,16 +244,18 @@ func utxProcessing() = {
         let txGas = { let raw = drop(tx, txSignature.size() + txSenderPublicKey.size() + 2); take(raw, extract(indexOf(raw, ","))) }
         let txScript = drop(tx, txSignature.size() + txSenderPublicKey.size() + txGas.size() + 3)
 
-        let txSenderAcc = extract(accountOf(txSenderPublicKey.toBytes()))
+        let txSenderAcc = accountOf(txSenderPublicKey.toBytes())
         let validation = validate(txSenderAcc, txGas.parseIntValue(), txScript, false)
         let costs = estimate(txScript)
 
         if validation.size() > 0 then 
             WriteSet([DataEntry(keyUtxSize, utxSize - 1), DataEntry(keyUtx, drop(utx, marker + 1))])
         else
+            let increasedReward = blockGasReward(-1) + costs[0]
+            let txs = if isDefined(blockInfo(-1).indexOf(";")) then ";" + blockTxs(-1) else ""
             WriteSet(
-                DataEntry(keyLast, "," + h().toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerPublicKey(-1) + "," 
-                    + blockPrevHash(-1) + "," + (blockGasReward(-1) + costs[0]).toString() + blockTxs(-1) + ";" + tx)
+                DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1).toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerPublicKey(-1) + "," 
+                    + blockNonce(-1).toString() + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx)
                 ::DataEntry(keyUtxSize, utxSize - 1)
                 ::DataEntry(keyUtx, drop(utx, marker + 1))
                 ::evaluate(txScript)
@@ -287,8 +272,8 @@ func transaction(signatureBase64: String, gas: Int, script: String) = {
     else if !isRegistered(i.callerPublicKey) then throw("Only registered accounts can send transactions!")
     else if !(getIntegerValue(this, keyUtxSize) < utxLimit) then throw("UTX size limit reached! Please try later")
     else
-        let txBody = extract(accountOf(i.callerPublicKey)) + "," + gas.toString() + "," + script
-        let acc = extract(accountOf(i.callerPublicKey))
+        let txBody = accountOf(i.callerPublicKey) + "," + gas.toString() + "," + script
+        let acc = accountOf(i.callerPublicKey)
         let validation = validate(acc, gas, script, true)
         let costs = estimate(script)
         let reserved = costs[0] + costs[1]
@@ -307,11 +292,8 @@ func transaction(signatureBase64: String, gas: Int, script: String) = {
 
 @Verifier(tx)
 func verify() = {
-    #match tx {
-    #    case d:DataTransaction => false # blockchain can be changed only via dApp actions
-    #    case t:TransferTransaction => !isDefined(t.assetId) # TODO ведь так проверять на вавесность?
-    #    # TODO для SetScript - мультисиг с китами в блокчейне
-    #    case _ => sigVerify(tx.bodyBytes, tx.proofs[0], dappPublicKey)
-    #}
-    true
+    match tx {
+        case d:DataTransaction => false # rudechain can be changed only via dApp actions
+        case _ => sigVerify(tx.bodyBytes, tx.proofs[0], dappPublicKey)
+    }
 }
