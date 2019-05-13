@@ -82,7 +82,7 @@ func estimate(script: String) = {
         let gasRequired = 1
         let amount = words[2].parseIntValue()
         [gasRequired, amount]
-    else [1000000, 0] # unreachable, because script is already validated
+    else [1000000, 0] # unreachable state because validated
 }
 
 func evaluate(script: String) = {
@@ -94,7 +94,7 @@ func evaluate(script: String) = {
 
     if words[0] == "SEND" then
         send(words[1], words[2].parseIntValue())
-    else throw("can't evaluate script") # unreachable, because script is already validated
+    else throw("can't evaluate script") # unreachable state because validated
 }
 
 func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
@@ -237,10 +237,9 @@ func utxProcessing() = {
         let tx = take(utx, marker)
         let txFields = tx.split(",")
 
-        let txSignature = txFields[0]
-        let txSenderAccount = txFields[1]
-        let txGas = txFields[2].parseIntValue()
-        let txScript = txFields[3]
+        let txSenderAccount = txFields[0]
+        let txGas = txFields[1].parseIntValue()
+        let txScript = txFields[2]
 
         let txSenderPubKey = pubKeyOf(txSenderAccount)
         let validation = validate(txSenderPubKey, txGas, txScript, false)
@@ -265,24 +264,22 @@ func utxProcessing() = {
 }
 
 @Callable(i)
-func transaction(signatureBase64: String, gas: Int, script: String) = {
+func transaction(gas: Int, script: String) = {
     if i.caller == this then throw("The Rudechain dApp can't send transactions!")
     else if !isRegistered(i.callerPublicKey) then throw("Only registered accounts can send transactions!")
     else if getIntegerValue(this, keyUtxSize) == utxLimit then throw("UTX size limit reached! Please try later")
     else
         let sender = accountOf(i.callerPublicKey)
-        let txSignedBody = sender + gas.toString() + script
         let txBody = sender + "," + gas.toString() + "," + script
         let validation = validate(sender, gas, script, true)
         let costs = estimate(script)
         let reserved = costs[0] + costs[1]
 
         if validation.size() > 0 then throw(validation)
-        else if !sigVerify(txSignedBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then throw("Incorrect signature!")
         else
             let utxPool = getStringValue(this, keyUtx)
             WriteSet([
-                DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";"),
+                DataEntry(keyUtx, utxPool + txBody + ";"),
                 DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1),
                 DataEntry(keyAccountPrefix + sender, pubKeyOf(sender) + "," + regHeightOf(sender).toString() + "," + totalBalanceOf(sender).toString() + "," 
                     + (availableBalanceOf(sender) - reserved).toString())
