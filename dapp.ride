@@ -52,7 +52,7 @@ func blockNonce(h: Int) = blockHeaders(h)[4].parseIntValue()
 func blockPrevHash(h: Int) = blockHeaders(h)[5]
 func blockDifficulty(h: Int) = blockHeaders(h)[6].parseIntValue()
 func blockGasReward(h: Int) = blockHeaders(h)[7].parseIntValue()
-func blockTxs(h: Int) = { # TODO List
+func blockTxs(h: Int) = {
     let blInfo = blockInfo(h)
     let semicolon = indexOf(blInfo, ";")
     if isDefined(semicolon) then
@@ -160,7 +160,6 @@ func register(name: String) = {
     else
         WriteSet([
             DataEntry(keyPubKeyPrefix + i.callerPublicKey.toBase58String(), name),
-            #publicKey, regHeight, totalBalance, availableBalance
             DataEntry(keyAccountPrefix + name, pubKey(i.callerPublicKey) + "," + h().toString() + "," + initBalance.toString() + "," + initBalance.toString())
         ])
 }
@@ -175,13 +174,13 @@ func mine(nonce: Int) = {
     let difficulty = blockDifficulty(-1)
     let newDifficulty = if delta == 1 then difficulty + 2 else if delta == 2 || delta == 3 || difficulty == 1 then difficulty else difficulty - 1
 
-    let hash = sha256((
+    let hash = blake2b256((
         lastBlock.timestamp.toString()
         + lastBlock.height.toString()
         + i.callerPublicKey.toBase58String()
         + nonce.toString()
         + blockPrevHash(-1)
-    ).toBytes()) # TODO Utf8 или toBase58? достаточно ли sha256? Попробовать blake и keccak, как в TxId
+    ).toBytes())
 
     let byte0LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(take(hash, 1)))
     let byte1LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 2), 1)))
