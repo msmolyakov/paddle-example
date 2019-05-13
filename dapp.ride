@@ -19,11 +19,17 @@
 # show rewards and balance
 
 # TODO dApp:
+# быстро майнить первый блок, чтобы не случилось ошибок с аккаунтом майнера genesis блока
+# везде не доверять caller.publicKey - проверять подпись
+# плавно снижать до 0 награду за блок и увеличивать % от газа до 100, чтобы через N блоков осталась только комиссия за транзы
+# вместо available хранить reserved?
 # gateway
 # NFT
 # lightning
 # multiple commands
 # fixed point
+
+let dappPublicKey = base58'' # SPECIFY BEFORE SETTING THE CONTRACT!
 
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
@@ -31,8 +37,6 @@ let keyHeight = "height"
 let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
-
-let dappPublicKey = base58'' # TODO SET!
 
 let registrationCost = 5
 let utxLimit = 100
@@ -47,7 +51,7 @@ func blockHeaders(h: Int) = blockInfo(h).split(";")[0].split(",")
 func blockHash(h: Int) = blockHeaders(h)[0]
 func blockTimestamp(h: Int) = blockHeaders(h)[1].parseIntValue()
 func blockReferenceHeight(h: Int) = blockHeaders(h)[2].parseIntValue()
-func blockMinerPublicKey(h: Int) = blockHeaders(h)[3] # TODO account?
+func blockMinerAccount(h: Int) = blockHeaders(h)[3]
 func blockNonce(h: Int) = blockHeaders(h)[4].parseIntValue()
 func blockPrevHash(h: Int) = blockHeaders(h)[5]
 func blockDifficulty(h: Int) = blockHeaders(h)[6].parseIntValue()
@@ -78,7 +82,7 @@ func estimate(script: String) = {
         let gasRequired = 1
         let amount = words[2].parseIntValue()
         [gasRequired, amount]
-    else [1000000, 0] # unreachable state because validated
+    else [1000000, 0] # unreachable, because script is already validated
 }
 
 func evaluate(script: String) = {
@@ -90,10 +94,9 @@ func evaluate(script: String) = {
 
     if words[0] == "SEND" then
         send(words[1], words[2].parseIntValue())
-    else throw("can't evaluate script") # unreachable state because validated
+    else throw("can't evaluate script") # unreachable, because script is already validated
 }
 
-# TODO несколько команд!
 func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
     let words = script.split(" ")
 
@@ -138,12 +141,11 @@ func genesis() = {
 
 @Callable(i)
 func register(name: String) = {
-    let callerPubKey = i.callerPublicKey.toBase58String()
     let validChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
     if (!isDefined(i.payment) || isDefined(extract(i.payment).assetId) || extract(i.payment).amount != registrationCost * 100000000) then
         throw("Registration costs " + registrationCost.toString() + " Waves!")
-    else if !(size(name) > 0 && size(name) <= 8 && isDefined(indexOf(validChars, take(name, 1)))
+    else if !(size(name) > 1 && size(name) <= 8 && isDefined(indexOf(validChars, take(name, 1)))
         && (if (size(name) > 1) then isDefined(indexOf(validChars, take(drop(name, 1), 1))) else true)
         && (if (size(name) > 2) then isDefined(indexOf(validChars, take(drop(name, 2), 1))) else true)
         && (if (size(name) > 3) then isDefined(indexOf(validChars, take(drop(name, 3), 1))) else true)
@@ -152,22 +154,18 @@ func register(name: String) = {
         && (if (size(name) > 6) then isDefined(indexOf(validChars, take(drop(name, 6), 1))) else true)
         && (if (size(name) > 7) then isDefined(indexOf(validChars, take(drop(name, 7), 1))) else true))
     then
-        throw("Account name must have [1..8] length and contain only [a-z0-9] chars")
+        throw("Account name must have [2..8] length and contain only [a-z0-9] chars")
     else if isRegistered(i.callerPublicKey) then
         throw("Public key of the caller is already registered as '" + accountOf(i.callerPublicKey) + "'")
     else if isTaken(name) then
         throw("Account name '" + name + "' is already taken")
     else
         WriteSet([
-            DataEntry(keyPubKeyPrefix + i.callerPublicKey.toBase58String(), name),
+            DataEntry(keyPubKeyPrefix + pubKey(i.callerPublicKey), name),
             DataEntry(keyAccountPrefix + name, pubKey(i.callerPublicKey) + "," + h().toString() + "," + initBalance.toString() + "," + initBalance.toString())
         ])
 }
 
-# TODO везде не доверять caller.publicKey - проверять подпись
-# TODO плавно снижать до 0 награду за блок и увеличивать % от газа до 100, чтобы через N блоков осталась только комиссия за транзы
-# TODO вместо available хранить reserved?
-# TODO везде хранить не паблик кеи, а аккаунты
 @Callable(i)
 func mine(nonce: Int) = {
     let delta = lastBlock.height - blockReferenceHeight(-1)
@@ -203,15 +201,15 @@ func mine(nonce: Int) = {
     if i.caller == this then throw("The dApp can't mine!")
     else if !isRegistered(i.callerPublicKey) then throw("Miner must be registered!")
     else if delta == 0 then throw("Can't mine on same reference height as last block: " + lastBlock.height.toString())
-    else if firstZeroBits < newDifficulty then throw("Hash has " + firstZeroBits.toString() + " difficulty but " + newDifficulty.toString() + " required")
+    else if firstZeroBits < newDifficulty then throw("Hash has difficulty " + firstZeroBits.toString() + ", but at least " + newDifficulty.toString() + " is required")
     else
-        let prevMinerAccount = blockMinerPublicKey(-1)
+        let prevMinerAccount = blockMinerAccount(-1)
         let newMinerAccount = accountOf(i.callerPublicKey)
         let newHeight = h() + 1
         let newBlock = hash.toBase58String()
             + "," + lastBlock.timestamp.toString() 
             + "," + lastBlock.height.toString() 
-            + "," + i.callerPublicKey.toBase58String() 
+            + "," + newMinerAccount 
             + "," + nonce.toString() 
             + "," + blockPrevHash(-1)
             + "," + newDifficulty.toString()
@@ -230,21 +228,22 @@ func mine(nonce: Int) = {
 
 @Callable(i)
 func utxProcessing() = {
-    if i.callerPublicKey != blockMinerPublicKey(-1).fromBase58String() then throw("Only the current miner can processing UTX!")
+    if i.callerPublicKey != pubKeyOf(blockMinerAccount(-1)).fromBase58String() then throw("Only the current miner can processing UTX!")
     else if getIntegerValue(this, keyUtxSize) == 0 then WriteSet([])
     else
         let utx = getStringValue(this, keyUtx)
         let utxSize = getIntegerValue(this, keyUtxSize)
         let marker = extract(indexOf(utx, ";"))
         let tx = take(utx, marker)
+        let txFields = tx.split(",")
 
-        let txSignature = take(tx, extract(indexOf(tx, ",")))
-        let txSenderPublicKey = { let raw = drop(tx, txSignature.size() + 1); take(raw, extract(indexOf(raw, ","))) }
-        let txGas = { let raw = drop(tx, txSignature.size() + txSenderPublicKey.size() + 2); take(raw, extract(indexOf(raw, ","))) }
-        let txScript = drop(tx, txSignature.size() + txSenderPublicKey.size() + txGas.size() + 3)
+        let txSignature = txFields[0]
+        let txSenderAccount = txFields[1]
+        let txGas = txFields[2].parseIntValue()
+        let txScript = txFields[3]
 
-        let txSenderAcc = accountOf(txSenderPublicKey.toBytes())
-        let validation = validate(txSenderAcc, txGas.parseIntValue(), txScript, false)
+        let txSenderPubKey = pubKeyOf(txSenderAccount)
+        let validation = validate(txSenderPubKey, txGas, txScript, false)
         let costs = estimate(txScript)
 
         if validation.size() > 0 then 
@@ -253,39 +252,40 @@ func utxProcessing() = {
             let increasedReward = blockGasReward(-1) + costs[0]
             let txs = if isDefined(blockInfo(-1).indexOf(";")) then ";" + blockTxs(-1) else ""
             WriteSet(
-                DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1).toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerPublicKey(-1) + "," 
+                DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1).toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerAccount(-1) + "," 
                     + blockNonce(-1).toString() + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx)
                 ::DataEntry(keyUtxSize, utxSize - 1)
                 ::DataEntry(keyUtx, drop(utx, marker + 1))
                 ::evaluate(txScript)
-                ::DataEntry( keyAccountPrefix + txSenderAcc, txSenderPublicKey + "," + regHeightOf(txSenderAcc).toString() + "," 
-                    + (totalBalanceOf(txSenderAcc) - costs[0] - costs[1]).toString() + "," 
-                    + (availableBalanceOf(txSenderAcc) + txGas.parseIntValue() - costs[0]).toString() )
+                ::DataEntry( keyAccountPrefix + txSenderAccount, txSenderPubKey + "," + regHeightOf(txSenderAccount).toString() + "," 
+                    + (totalBalanceOf(txSenderAccount) - costs[0] - costs[1]).toString() + "," 
+                    + (availableBalanceOf(txSenderAccount) + txGas - costs[0]).toString() )
                 ::nil
             )
 }
 
 @Callable(i)
 func transaction(signatureBase64: String, gas: Int, script: String) = {
-    if i.caller == this then throw("The dApp can't send transactions!")
+    if i.caller == this then throw("The Rudechain dApp can't send transactions!")
     else if !isRegistered(i.callerPublicKey) then throw("Only registered accounts can send transactions!")
-    else if !(getIntegerValue(this, keyUtxSize) < utxLimit) then throw("UTX size limit reached! Please try later")
+    else if getIntegerValue(this, keyUtxSize) == utxLimit then throw("UTX size limit reached! Please try later")
     else
-        let txBody = accountOf(i.callerPublicKey) + "," + gas.toString() + "," + script
-        let acc = accountOf(i.callerPublicKey)
-        let validation = validate(acc, gas, script, true)
+        let sender = accountOf(i.callerPublicKey)
+        let txSignedBody = sender + gas.toString() + script
+        let txBody = sender + "," + gas.toString() + "," + script
+        let validation = validate(sender, gas, script, true)
         let costs = estimate(script)
         let reserved = costs[0] + costs[1]
 
         if validation.size() > 0 then throw(validation)
-        else if !sigVerify(txBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then throw("Incorrect signature!")
+        else if !sigVerify(txSignedBody.toBytes(), signatureBase64.fromBase64String(), i.callerPublicKey) then throw("Incorrect signature!")
         else
             let utxPool = getStringValue(this, keyUtx)
             WriteSet([
                 DataEntry(keyUtx, utxPool + signatureBase64 + "," + txBody + ";"),
                 DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1),
-                DataEntry(keyAccountPrefix + acc, pubKeyOf(acc) + "," + regHeightOf(acc).toString() + "," + totalBalanceOf(acc).toString() + "," 
-                    + (availableBalanceOf(acc) - reserved).toString())
+                DataEntry(keyAccountPrefix + sender, pubKeyOf(sender) + "," + regHeightOf(sender).toString() + "," + totalBalanceOf(sender).toString() + "," 
+                    + (availableBalanceOf(sender) - reserved).toString())
             ])
 }
 
