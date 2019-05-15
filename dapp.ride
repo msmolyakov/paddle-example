@@ -29,7 +29,7 @@
 # multiple commands
 # fixed point
 
-let dappPublicKey = base58'' # SPECIFY BEFORE SETTING THE CONTRACT!
+let dappPublicKey = base58'89JFo2Xg8dTGRAJTV8TKzy2Ruv9UQt6ZHNbYRv11g9PB' # SPECIFY BEFORE SETTING THE CONTRACT!
 
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
@@ -38,14 +38,14 @@ let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
 
-let registrationCost = 5
+let registrationCost = 1 # TODO CHECK!
 let utxLimit = 100
 let blockMinerReward = 20
 let initBalance = 5
 
 func h() = getIntegerValue(this, keyHeight)
 
-func blockInfo(h: Int) = getStringValue(this, if h == -1 || h == h() then keyLast else h.toString())
+func blockInfo(h: Int) = this.getStringValue(if h == -1 || h == h() then keyLast else h.toString())
 func blockHeaders(h: Int) = blockInfo(h).split(";")[0].split(",")
 
 func blockHash(h: Int) = blockHeaders(h)[0]
@@ -58,17 +58,17 @@ func blockDifficulty(h: Int) = blockHeaders(h)[6].parseIntValue()
 func blockGasReward(h: Int) = blockHeaders(h)[7].parseIntValue()
 func blockTxs(h: Int) = {
     let blInfo = blockInfo(h)
-    let semicolon = indexOf(blInfo, ";")
+    let semicolon = blInfo.indexOf(";")
     if isDefined(semicolon) then
-        drop(blInfo, extract(semicolon) + 1)
+        blInfo.drop(semicolon.extract() + 1)
     else ""
 }
 
 func pubKey(pk: ByteVector) = pk.toBase58String()
-func isRegistered(pK: ByteVector) = isDefined(getString(this, keyPubKeyPrefix + pubKey(pK)))
-func isTaken(name: String) = isDefined(getString(this, keyAccountPrefix + name))
-func accountOf(pK: ByteVector) = getStringValue(this, keyPubKeyPrefix + pubKey(pK))
-func accountInfo(name: String) = getStringValue(this, keyAccountPrefix + name).split(",")
+func isRegistered(pK: ByteVector) = isDefined(this.getString(keyPubKeyPrefix + pubKey(pK)))
+func isTaken(name: String) = isDefined(this.getString(keyAccountPrefix + name))
+func accountOf(pK: ByteVector) = this.getStringValue(keyPubKeyPrefix + pubKey(pK))
+func accountInfo(name: String) = this.getStringValue(keyAccountPrefix + name).split(",")
 
 func pubKeyOf(account: String) = accountInfo(account)[0]
 func regHeightOf(account: String) = accountInfo(account)[1].parseIntValue()
@@ -122,15 +122,15 @@ func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
 func genesis() = {
     if i.caller != this then
         throw("Rudechain can be created only by the dApp")
-    else if isDefined(getString(this, keyLast))
-        || isDefined(getInteger(this, keyHeight))
-        || isDefined(getInteger(this, keyUtx))
-        || isDefined(getInteger(this, keyUtxSize))
+    else if isDefined(this.getString(keyLast))
+        || isDefined(this.getInteger(keyHeight))
+        || isDefined(this.getInteger(keyUtx))
+        || isDefined(this.getInteger(keyUtxSize))
     then
         throw("Rudechain is already created")
     else
         let gHeight = 0
-        let genesisBlock = "0," + lastBlock.timestamp.toString() + "," + gHeight.toString() + "," + toBase58String(i.callerPublicKey) + ",0,0,0"
+        let genesisBlock = "0," + lastBlock.timestamp.toString() + "," + gHeight.toString() + "," + pubKey(i.callerPublicKey) + ",0,0,1,0" # TODO что с аккаунтом?
         WriteSet([
             DataEntry(keyLast, genesisBlock),
             DataEntry(keyHeight, gHeight),
@@ -143,16 +143,17 @@ func genesis() = {
 func register(name: String) = {
     let validChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-    if (!isDefined(i.payment) || isDefined(extract(i.payment).assetId) || extract(i.payment).amount != registrationCost * 100000000) then
+    if (!isDefined(i.payment) || isDefined(i.payment.extract().assetId) || i.payment.extract().amount != registrationCost * 100000000) then
         throw("Registration costs " + registrationCost.toString() + " Waves!")
-    else if !(size(name) > 1 && size(name) <= 8 && isDefined(indexOf(validChars, take(name, 1)))
-        && (if (size(name) > 1) then isDefined(indexOf(validChars, take(drop(name, 1), 1))) else true)
-        && (if (size(name) > 2) then isDefined(indexOf(validChars, take(drop(name, 2), 1))) else true)
-        && (if (size(name) > 3) then isDefined(indexOf(validChars, take(drop(name, 3), 1))) else true)
-        && (if (size(name) > 4) then isDefined(indexOf(validChars, take(drop(name, 4), 1))) else true)
-        && (if (size(name) > 5) then isDefined(indexOf(validChars, take(drop(name, 5), 1))) else true)
-        && (if (size(name) > 6) then isDefined(indexOf(validChars, take(drop(name, 6), 1))) else true)
-        && (if (size(name) > 7) then isDefined(indexOf(validChars, take(drop(name, 7), 1))) else true))
+    else if !(name.size() > 1 && name.size() <= 8 
+        && isDefined(validChars.indexOf(name.take(1)))
+        && isDefined(validChars.indexOf(name.drop(1).take(1)))
+        && (if (name.size() > 2) then isDefined(validChars.indexOf(name.drop(2).take(1))) else true)
+        && (if (name.size() > 3) then isDefined(validChars.indexOf(name.drop(3).take(1))) else true)
+        && (if (name.size() > 4) then isDefined(validChars.indexOf(name.drop(4).take(1))) else true)
+        && (if (name.size() > 5) then isDefined(validChars.indexOf(name.drop(5).take(1))) else true)
+        && (if (name.size() > 6) then isDefined(validChars.indexOf(name.drop(6).take(1))) else true)
+        && (if (name.size() > 7) then isDefined(validChars.indexOf(name.drop(7).take(1))) else true))
     then
         throw("Account name must have [2..8] length and contain only [a-z0-9] chars")
     else if isRegistered(i.callerPublicKey) then
@@ -180,14 +181,14 @@ func mine(nonce: Int) = {
         + blockPrevHash(-1)
     ).toBytes())
 
-    let byte0LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(take(hash, 1)))
-    let byte1LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 2), 1)))
-    let byte2LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 3), 1)))
-    let byte3LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 4), 1)))
-    let byte4LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 5), 1)))
-    let byte5LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 6), 1)))
-    let byte6LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 7), 1)))
-    let byte7LeadingZeros = getIntegerValue(Alias("zerobytes"), toBase58String(takeRight(take(hash, 8), 1)))
+    let byte0LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(1).toBase58String())
+    let byte1LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(2).takeRight(1).toBase58String())
+    let byte2LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(3).takeRight(1).toBase58String())
+    let byte3LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(4).takeRight(1).toBase58String())
+    let byte4LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(5).takeRight(1).toBase58String())
+    let byte5LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(6).takeRight(1).toBase58String())
+    let byte6LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(7).takeRight(1).toBase58String())
+    let byte7LeadingZeros = Alias("zerobytes").getIntegerValue(hash.take(8).takeRight(1).toBase58String())
 
     let firstZeroBits = if byte0LeadingZeros != 8 then byte0LeadingZeros else ( 8 +
                         if byte1LeadingZeros != 8 then byte1LeadingZeros else ( 8 +
@@ -229,12 +230,12 @@ func mine(nonce: Int) = {
 @Callable(i)
 func utxProcessing() = {
     if i.callerPublicKey != pubKeyOf(blockMinerAccount(-1)).fromBase58String() then throw("Only the current miner can processing UTX!")
-    else if getIntegerValue(this, keyUtxSize) == 0 then WriteSet([])
+    else if this.getIntegerValue(keyUtxSize) == 0 then WriteSet([])
     else
-        let utx = getStringValue(this, keyUtx)
-        let utxSize = getIntegerValue(this, keyUtxSize)
-        let marker = extract(indexOf(utx, ";"))
-        let tx = take(utx, marker)
+        let utx = this.getStringValue(keyUtx)
+        let utxSize = this.getIntegerValue(keyUtxSize)
+        let marker = utx.indexOf(";").extract()
+        let tx = utx.take(marker)
         let txFields = tx.split(",")
 
         let txSenderAccount = txFields[0]
@@ -246,7 +247,7 @@ func utxProcessing() = {
         let costs = estimate(txScript)
 
         if validation.size() > 0 then 
-            WriteSet([DataEntry(keyUtxSize, utxSize - 1), DataEntry(keyUtx, drop(utx, marker + 1))])
+            WriteSet([DataEntry(keyUtxSize, utxSize - 1), DataEntry(keyUtx, utx.drop(marker + 1))])
         else
             let increasedReward = blockGasReward(-1) + costs[0]
             let txs = if isDefined(blockInfo(-1).indexOf(";")) then ";" + blockTxs(-1) else ""
@@ -254,7 +255,7 @@ func utxProcessing() = {
                 DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1).toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerAccount(-1) + "," 
                     + blockNonce(-1).toString() + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx)
                 ::DataEntry(keyUtxSize, utxSize - 1)
-                ::DataEntry(keyUtx, drop(utx, marker + 1))
+                ::DataEntry(keyUtx, utx.drop(marker + 1))
                 ::evaluate(txScript)
                 ::DataEntry( keyAccountPrefix + txSenderAccount, txSenderPubKey + "," + regHeightOf(txSenderAccount).toString() + "," 
                     + (totalBalanceOf(txSenderAccount) - costs[0] - costs[1]).toString() + "," 
@@ -267,7 +268,7 @@ func utxProcessing() = {
 func transaction(gas: Int, script: String) = {
     if i.caller == this then throw("The Rudechain dApp can't send transactions!")
     else if !isRegistered(i.callerPublicKey) then throw("Only registered accounts can send transactions!")
-    else if getIntegerValue(this, keyUtxSize) == utxLimit then throw("UTX size limit reached! Please try later")
+    else if this.getIntegerValue(keyUtxSize) == utxLimit then throw("UTX size limit reached! Please try later")
     else
         let sender = accountOf(i.callerPublicKey)
         let txBody = sender + "," + gas.toString() + "," + script
@@ -277,10 +278,10 @@ func transaction(gas: Int, script: String) = {
 
         if validation.size() > 0 then throw(validation)
         else
-            let utxPool = getStringValue(this, keyUtx)
+            let utxPool = this.getStringValue(keyUtx)
             WriteSet([
                 DataEntry(keyUtx, utxPool + txBody + ";"),
-                DataEntry(keyUtxSize, getIntegerValue(this, keyUtxSize) + 1),
+                DataEntry(keyUtxSize, this.getIntegerValue(keyUtxSize) + 1),
                 DataEntry(keyAccountPrefix + sender, pubKeyOf(sender) + "," + regHeightOf(sender).toString() + "," + totalBalanceOf(sender).toString() + "," 
                     + (availableBalanceOf(sender) - reserved).toString())
             ])
@@ -290,6 +291,6 @@ func transaction(gas: Int, script: String) = {
 func verify() = {
     match tx {
         case d:DataTransaction => false # rudechain can be changed only via dApp actions
-        case _ => sigVerify(tx.bodyBytes, tx.proofs[0], dappPublicKey)
+        case _ => tx.bodyBytes.sigVerify(tx.proofs[0], dappPublicKey)
     }
 }
