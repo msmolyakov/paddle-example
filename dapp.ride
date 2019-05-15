@@ -20,14 +20,12 @@
 
 # TODO dApp:
 # быстро майнить первый блок, чтобы не случилось ошибок с аккаунтом майнера genesis блока
-# везде не доверять caller.publicKey - проверять подпись
 # плавно снижать до 0 награду за блок и увеличивать % от газа до 100, чтобы через N блоков осталась только комиссия за транзы
 # вместо available хранить reserved?
 # gateway
 # NFT
 # lightning
 # multiple commands
-# fixed point
 
 let dappPublicKey = base58'89JFo2Xg8dTGRAJTV8TKzy2Ruv9UQt6ZHNbYRv11g9PB' # SPECIFY BEFORE SETTING THE CONTRACT!
 
