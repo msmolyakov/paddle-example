@@ -57,7 +57,7 @@ func blockTimestamp(h: Int) = {
     let blInfo = blockInfo(h)
     let left = blInfo.indexOf(",").extract() + 1
     let right = blInfo.indexOf(",", left).extract()
-    blInfo.drop(left).take(right - left).parseIntValue()
+    blInfo.drop(left).take(right - left)
 }
 func blockReferenceHeight(h: Int) = {
     let blInfo = blockInfo(h)
@@ -75,7 +75,7 @@ func blockNonce(h: Int) = {
     let blInfo = blockInfo(h)
     let left = blInfo.indexOf(",", blInfo.indexOf(",", blInfo.indexOf(",", blInfo.indexOf(",").extract() + 1).extract() + 1).extract() + 1).extract() + 1
     let right = blInfo.indexOf(",", left).extract()
-    blInfo.drop(left).take(right - left).parseIntValue()
+    blInfo.drop(left).take(right - left)
 }
 func blockPrevHash(h: Int) = {
     let blInfo = blockInfo(h)
@@ -318,7 +318,7 @@ func utxProcessing() = {
         let txFields = tx.split(",")
 
         let txSenderAccount = txFields[0]
-        let txGas = txFields[1].split(",")[0].parseIntValue()
+        let txGas = txFields[1].split(",")[1].parseIntValue()
         let txScript = txFields[2]
 
         let txSenderPubKey = pubKeyOf(txSenderAccount)
@@ -331,8 +331,8 @@ func utxProcessing() = {
             let increasedReward = blockGasReward(-1) + costs[0]
             let txs = if isDefined(blockInfo(-1).indexOf(";")) then ";" + blockTxs(-1) else ""
             WriteSet([
-                DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1).toString() + "," + blockReferenceHeight(-1).toString() + "," + blockMinerAccount(-1) + "," 
-                    + blockNonce(-1).toString() + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx),
+                DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1) + "," + blockReferenceHeight(-1).toString() + "," + blockMinerAccount(-1) + "," 
+                    + blockNonce(-1) + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx),
                 DataEntry(keyUtxSize, utxSize - 1),
                 DataEntry(keyUtx, utx.drop(tx.size() + 1)),
                 evaluate(txScript),
