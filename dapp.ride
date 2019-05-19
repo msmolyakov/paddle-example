@@ -3,26 +3,18 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 # TODO client:
-# balances
-# sign & send tx
-# utx view
-# blocks list (+ hide empty)
+# hide empty blocks
 # block view (+ txs list)
-# tx view
 # account view
 # курс на DEX (тикер!)
 
 # TODO miner:
-# provide seed
 # monitor height => recalculate base and restart mining thread on new
-# calculate zero bytes
 # show rewards and balance
 
 # TODO dApp:
-# быстро майнить первый блок, чтобы не случилось ошибок с аккаунтом майнера genesis блока
 # плавно снижать до 0 награду за блок и увеличивать % от газа до 100, чтобы через N блоков осталась только комиссия за транзы
 # вместо available хранить reserved?
-# gateway
 # NFT
 # lightning
 # multiple commands
