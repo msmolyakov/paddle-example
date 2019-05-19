@@ -28,7 +28,6 @@
 # multiple commands
 
 let dappPublicKey = base58'' # SPECIFY BEFORE SETTING THE CONTRACT!
-let isDataTxAllowed = false
 
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
@@ -37,7 +36,7 @@ let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
 
-let registrationCost = 1 # TODO CHECK!
+let registrationCost = 5 # TODO CHECK!
 let utxLimit = 100
 let blockMinerReward = 20
 let initBalance = 5
@@ -175,7 +174,7 @@ func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
     let words = script.split(" ")
 
     if words[0] == "SEND" then
-        if words.size() != 3 then "SEND command expects args: recipient amount"
+        if words.size() != 3 then "Missed args: SEND recipient amount"
         else
             let gasRequired = estimate(script)[0]
             let recipient = words[1].split(" ")[1]
@@ -250,7 +249,7 @@ func register(name: String) = {
 func mine(nonce: Int) = {
     let delta = lastBlock.height - blockReferenceHeight(-1)
     let difficulty = blockDifficulty(-1)
-    let newDifficulty = if delta == 1 then difficulty + 2 else if delta == 2 || delta == 3 || difficulty == 1 then difficulty else difficulty - 1
+    let newDifficulty = if delta == 1 then difficulty + 3 else if delta == 2 || delta == 3 then difficulty + 1 else if difficulty - (delta / 2) > 0 then difficulty - (delta / 2) else 1
 
     let hash = blake2b256((
         lastBlock.timestamp.toString()
@@ -370,7 +369,7 @@ func transaction(gas: Int, script: String) = {
 @Verifier(tx)
 func verify() = {
     match tx {
-        case d:DataTransaction => isDataTxAllowed # rudechain can be changed only via dApp actions
+        case d:DataTransaction => false # rudechain can be changed only via dApp actions
         case _ => tx.bodyBytes.sigVerify(tx.proofs[0], dappPublicKey)
     }
 }
