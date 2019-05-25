@@ -19,7 +19,9 @@
 # lightning
 # multiple commands
 
-let dappPublicKey = base58'' # SPECIFY BEFORE SETTING THE CONTRACT!
+let dappPublicKey = base58'HRbmLY7xtSvGXUo2Dfz4BvcCKkQYZNnvTo9ADX4jJHQd' # SPECIFY BEFORE SETTING THE CONTRACT!
+let assetId = base58'' # SPECIFY BEFORE SETTING THE CONTRACT!
+let isDataTxAllowed = true
 
 let keyAccountPrefix = "@"
 let keyPubKeyPrefix = "$"
@@ -28,7 +30,7 @@ let keyLast = "last"
 let keyUtx = "utx"
 let keyUtxSize = "utx-size"
 
-let registrationCost = 5 # TODO CHECK!
+let registrationCost = 1 # TODO CHECK!
 let utxLimit = 100
 let blockMinerReward = 20
 let initBalance = 5
@@ -147,22 +149,41 @@ func estimate(script: String) = {
         let gasRequired = 1
         let amount = words[2].parseIntValue()
         [gasRequired, amount]
+    else if words[0] == "SWAP" then
+        let gasRequired = 2
+        let amount = words[2].parseIntValue()
+        [gasRequired, amount]
     else [1000000, 0] # unreachable state because validated
 }
 
-func evaluate(script: String) = {
+func evaluate(script: String, inv: Invocation) = {
     let words = script.split(" ")
-    func send(recipient: String, amount: Int) = {
+    func send(recipient: String, amount: Int) = {[
         DataEntry(keyAccountPrefix + recipient, pubKeyOf(recipient) + "," + regHeightOf(recipient).toString() + "," 
             + (totalBalanceOf(recipient) + amount).toString() + "," + (availableBalanceOf(recipient) + amount).toString())
-    }
+    ]}
 
     if words[0] == "SEND" then
         send(words[1].split(" ")[1], words[2].parseIntValue())
+    else if words[0] == "SWAP" then
+        let acc = accountOf(inv.callerPublicKey)
+        let direction = words[1].split(" ")[1]
+        let amount = words[2].parseIntValue()
+        if direction == "IN" then
+            [
+                DataEntry(keyAccountPrefix + acc, pubKeyOf(acc) + "," + regHeightOf(acc).toString() + "," 
+                    + (totalBalanceOf(acc) + amount).toString() + "," + (availableBalanceOf(acc) + amount).toString())
+            ]
+        else
+            [
+                DataEntry(keyAccountPrefix + acc, pubKeyOf(acc) + "," + regHeightOf(acc).toString() + "," 
+                    + (totalBalanceOf(acc) - amount).toString() + "," + availableBalanceOf(acc).toString()),
+                ScriptTransfer(inv.caller, amount, assetId)
+            ]
     else throw("can't evaluate script") # unreachable state because validated
 }
 
-func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
+func validate(acc: String, gas: Int, script: String, inv: Invocation, checkBalance: Boolean) = {
     let words = script.split(" ")
 
     if words[0] == "SEND" then
@@ -179,6 +200,30 @@ func validate(acc: String, gas: Int, script: String, checkBalance: Boolean) = {
             else if gas < gasRequired then "Not enough gas: actual " + gas.toString() + " but " + gasRequired.toString() + " estimated"
             else if checkBalance && availableBalanceOf(acc) < gas + amount then "Not enough available balance for payment and gas"
             else ""
+    else if words[0] == "SWAP" then
+        if words.size() != 3 then "Missed args: SWAP [IN/OUT] amount"
+        else
+            let gasRequired = estimate(script)[0]
+            let direction = words[1].split(" ")[1]
+            let amount = words[2].parseIntValue()
+
+            if direction == "IN" then
+                if !isDefined(inv.payment) then "Payment is required for the transaction!"
+                else
+                    let pmt = extract(inv.payment)
+                    if pmt.amount != amount || pmt.assetId != assetId then "Required payment is exactly " + amount.toString() + " of asset " + assetId.toBase58String()
+                    else if !(gas > 0) then "Gas amount must be positive!"
+                    else if gas < gasRequired then "Not enough gas: actual " + gas.toString() + " but " + gasRequired.toString() + " estimated"
+                    else if checkBalance && availableBalanceOf(acc) < gas then "Not enough available balance for gas"
+                    else ""
+            else if direction == "OUT" then
+                if !(gas > 0) then "Gas amount must be positive!"
+                else if gas < gasRequired then "Not enough gas: actual " + gas.toString() + " but " + gasRequired.toString() + " estimated"
+                else if checkBalance && availableBalanceOf(acc) < gas + amount then "Not enough available balance for gas"
+                else ""
+            else "Argument \"direction\" must be \"IN\" or \"OUT\""
+            # balance in, balance out
+            # gas req, gas attached
     else
         "unknown command " + words[0]
 }
@@ -313,7 +358,7 @@ func utxProcessing() = {
         let txScript = txFields[2]
 
         let txSenderPubKey = pubKeyOf(txSenderAccount)
-        let validation = validate(txSenderPubKey, txGas, txScript, false)
+        let validation = validate(txSenderPubKey, txGas, txScript, i, false)
         let costs = estimate(txScript)
 
         if validation.size() > 0 then 
@@ -321,16 +366,31 @@ func utxProcessing() = {
         else
             let increasedReward = blockGasReward(-1) + costs[0]
             let txs = if isDefined(blockInfo(-1).indexOf(";")) then ";" + blockTxs(-1) else ""
-            WriteSet([
-                DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1) + "," + blockReferenceHeight(-1).toString() + "," + blockMinerAccount(-1) + "," 
-                    + blockNonce(-1) + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx),
-                DataEntry(keyUtxSize, utxSize - 1),
-                DataEntry(keyUtx, utx.drop(tx.size() + 1)),
-                evaluate(txScript),
-                DataEntry( keyAccountPrefix + txSenderAccount, txSenderPubKey + "," + regHeightOf(txSenderAccount).toString() + "," 
-                    + (totalBalanceOf(txSenderAccount) - costs[0] - costs[1]).toString() + "," 
-                    + (availableBalanceOf(txSenderAccount) + txGas - costs[0]).toString() )
-            ])
+            let result = evaluate(txScript, i)
+            let entry = match result[0] {
+                case de:DataEntry => de
+                case _ => throw("execution failed")
+            }
+            let transfer = if result.size() > 1 then
+                match result[1] {
+                    case st:ScriptTransfer => st
+                    case _ => throw("execution failed")
+                }
+            else throw("execution failed")
+
+            ScriptResult(
+                WriteSet([
+                    DataEntry(keyLast, blockHash(-1) + "," + blockTimestamp(-1) + "," + blockReferenceHeight(-1).toString() + "," + blockMinerAccount(-1) + "," 
+                        + blockNonce(-1) + "," + blockPrevHash(-1) + "," + blockDifficulty(-1).toString() + "," + increasedReward.toString() + txs + ";" + tx),
+                    DataEntry(keyUtxSize, utxSize - 1),
+                    DataEntry(keyUtx, utx.drop(tx.size() + 1)),
+                    entry, #TODO ScriptResult with TransferSet
+                    DataEntry( keyAccountPrefix + txSenderAccount, txSenderPubKey + "," + regHeightOf(txSenderAccount).toString() + "," 
+                        + (totalBalanceOf(txSenderAccount) - costs[0] - costs[1]).toString() + "," 
+                        + (availableBalanceOf(txSenderAccount) + txGas - costs[0]).toString() )
+                ]),
+                TransferSet([transfer])
+            )
 }
 
 @Callable(i)
@@ -341,7 +401,7 @@ func transaction(gas: Int, script: String) = {
     else
         let sender = accountOf(i.callerPublicKey)
         let txBody = sender + "," + gas.toString() + "," + script
-        let validation = validate(sender, gas, script, true)
+        let validation = validate(sender, gas, script, i, true)
         let costs = estimate(script)
         let reserved = costs[0] + costs[1]
 
@@ -361,7 +421,7 @@ func transaction(gas: Int, script: String) = {
 @Verifier(tx)
 func verify() = {
     match tx {
-        case d:DataTransaction => false # rudechain can be changed only via dApp actions
+        case d:DataTransaction => isDataTxAllowed # rudechain can be changed only via dApp actions
         case _ => tx.bodyBytes.sigVerify(tx.proofs[0], dappPublicKey)
     }
 }
