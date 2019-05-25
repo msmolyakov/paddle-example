@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.wavesplatform</groupId>
             <artifactId>wavesj</artifactId>
-            <version>0.14.1</version>
+            <version>0.16-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -1,8 +1,9 @@
+import util.Version;
+import util.Node;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.*;
-import com.wavesplatform.wavesj.Node;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
@@ -24,63 +25,39 @@ import static com.wavesplatform.wavesj.ByteString.EMPTY;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static util.Node.runDockerNode;
 
 public class TestSuite {
 
-    DockerClient docker;
-    String containerId = "";
-
-    Node node = new Node("http://127.0.0.1:6869", 'R');
-
-    public TestSuite() throws URISyntaxException {
-    }
+    Node node;
 
     @Before
-    public void before() throws DockerException, InterruptedException {
-        docker = new DefaultDockerClient("unix:///var/run/docker.sock");
-        docker.pull("msmolyakov/waves-private-node:testnet");
+    public void before() throws DockerException, InterruptedException, URISyntaxException {
+        node = runDockerNode(Version.TESTNET);
+    }
 
-        String[] ports = {"6860", "6869"};
-        Map<String, List<PortBinding>> portBindings = new HashMap<>();
-        for (String port : ports) { // TODO randomly allocated?
-            List<PortBinding> hostPorts = new ArrayList<>();
-            hostPorts.add(PortBinding.of("0.0.0.0", port));
-            portBindings.put(port, hostPorts);
-        }
-
-        HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
-
-        ContainerConfig containerConfig = ContainerConfig.builder()
-                .hostConfig(hostConfig)
-                .image("msmolyakov/waves-private-node:testnet").exposedPorts(ports)
-                .build();
-
-        ContainerCreation container = docker.createContainer(containerConfig);
-        containerId = container.id();
-
-        docker.startContainer(containerId);
-
-//        Thread.sleep(600000);
-
-        //wait node readiness
-        for (int repeat = 0; repeat < 10; repeat++) {
-            try {
-                System.out.println(node.getVersion());
-                break;
-            } catch (IOException e) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException ignore) {}
-            }
-        }
-
-        // Exec command inside running container with attached STDOUT and STDERR
-        /*String[] command = {"sh", "-c", "ls"};
-        ExecCreation execCreation = docker.execCreate(
-                containerId, command, DockerClient.ExecCreateParam.attachStdout(),
-                DockerClient.ExecCreateParam.attachStderr());
-        LogStream output = docker.execStart(execCreation.id());
-        String execOutput = output.readFully();*/
+    @Test
+    public void test0() {
+        /*
+        * Node node = new Node(host, chainId);
+        * Account alice = new Account("seed text");
+        * alice
+        *   .uses(node);
+        *   .hasWavesBalance(10_00000000)
+        *   .setsScript("dapp.ride");
+        *
+        * alice.invokes().defaultFunction().butGetsError();
+        * InvokeScriptTx some = alice.invokes().function("some").withArg(INT, 1).successfully();
+        * some.result() shouldHave WriteSet([]);
+        *
+        * alice.issues("Scam Asset").withDecimals(0).successfully();
+        * alice.transfers(); alice().reissues(); alice.burns(); alice.exchanges();
+        * alice.leases(); alice.cancelsLease(); alice.createsAlias(); alice.massTransfers();
+        * alice.writesData(); alice.sponsors(); alice.setsAssetScript();
+        * alice.placesOrder(); alice.cancelsOrder();
+        *
+        * alice.data(); alice.data("").asInt();
+        */
     }
 
     @Test
