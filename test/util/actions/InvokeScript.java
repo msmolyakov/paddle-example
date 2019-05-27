@@ -62,6 +62,11 @@ public class InvokeScript implements Action {
         return this;
     }
 
+    public InvokeScript withFee(long fee) {
+        this.fee = fee;
+        return this;
+    }
+
     @Override
     public long calcFee() {
         //TODO add extra fees
