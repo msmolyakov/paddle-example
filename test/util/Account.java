@@ -10,6 +10,7 @@ import util.actions.Transfer;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 public class Account {
 
@@ -21,6 +22,13 @@ public class Account {
         this.seedText = seedText;
         this.node = worksWith;
         wavesAccount = PrivateKeyAccount.fromSeed(this.seedText, 0, node.wavesNode.getChainId());
+    }
+
+    public Account(String seedText, Node worksWith, long initWavesBalance) throws IOException, TimeoutException {
+        this.seedText = seedText;
+        this.node = worksWith;
+        wavesAccount = PrivateKeyAccount.fromSeed(this.seedText, 0, node.wavesNode.getChainId());
+        this.node.rich.transfers(initWavesBalance).to(this).successfully();
     }
 
     public List<DataEntry> data() throws IOException {

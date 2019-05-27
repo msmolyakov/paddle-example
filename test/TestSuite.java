@@ -26,10 +26,8 @@ public class TestSuite {
     @Before
     public void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
         node = runDockerNode(Version.TESTNET);
-        alice = new Account("alice", node);
-        bob = new Account("bob", node);
-
-        node.rich.transfers(1000_00000000L).to(alice).successfully();
+        alice = new Account("alice", node, 1000_00000000L);
+        bob = new Account("bob", node, 100_00000000L);
 
         assetId = alice.issues("Rude Asset").withDecimals(0).reissuable().successfully().getId().toString();
         alice.setsScript("dapp.ride").successfully();
