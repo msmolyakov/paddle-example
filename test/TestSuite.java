@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import static util.Node.runDockerNode;
 import static util.actions.invoke.Arg.arg;
 
@@ -52,14 +52,14 @@ public class TestSuite {
     public void dAppCanCreateGenesis() throws IOException, TimeoutException {
         Transaction invoke = alice.invokes().function("genesis", arg(assetId)).withFee(900_000).successfully();
 
-        assertEquals(alice.data().size(), 7);
-        assertEquals(alice.dataStr("assetId"), assetId);
-        assertTrue(!alice.dataStr("last").isEmpty());
-        assertEquals(alice.dataInt("height"), 0);
-        assertEquals(alice.dataStr("utx"), "");
-        assertEquals(alice.dataInt("utx-size"), 0);
-        assertEquals(alice.dataStr("$" + alice.wavesAccount.getAddress()), "dapp");
-//TODO getHeight bug        assertEquals(alice.dataStr("@dapp"), alice.wavesAccount.getAddress() + "," + invoke.getHeight() + ",0,0");
+        assertThat(alice.data(), hasSize(7));
+        assertThat(alice.dataStr("assetId"), is(assetId));
+        assertThat(alice.dataStr("last"), not(emptyString()));
+        assertThat(alice.dataInt("height"), is(0L));
+        assertThat(alice.dataStr("utx"), emptyString());
+        assertThat(alice.dataInt("utx-size"), is(0L));
+        assertThat(alice.dataStr("$" + alice.wavesAccount.getAddress()), is("dapp"));
+//TODO getHeight bug        assertThat(alice.dataStr("@dapp"), is(alice.wavesAccount.getAddress() + "," + invoke.getHeight() + ",0,0"));
     }
 
     @After
