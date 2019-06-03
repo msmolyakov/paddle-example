@@ -24,11 +24,21 @@ public class InvokeScript implements Action {
     private long fee;
     private String feeAssetId;
 
-    public InvokeScript() {
+    public InvokeScript(String addressOrAlias) {
+        this.dApp = addressOrAlias.isEmpty() ? null : addressOrAlias;
         this.call = null;
+        this.dApp = null;
         this.payments = new ArrayList<>();
-        this.fee = MIN_FEE + EXTRA_FEE;
+        this.fee = 0;
         this.feeAssetId = "WAVES";
+    }
+
+    public InvokeScript(Account dApp) {
+        this(dApp.wavesAccount.getAddress());
+    }
+
+    public InvokeScript() {
+        this("");
     }
 
     public InvokeScript from(Account sender) {
@@ -37,21 +47,12 @@ public class InvokeScript implements Action {
         return this;
     }
 
-    public InvokeScript dApp(String addressOrAlias) {
-        this.dApp = addressOrAlias;
-        return this;
-    }
-
-    public InvokeScript dApp(Account dApp) {
-        this.dApp(dApp.wavesAccount.getAddress());
-        return this;
-    }
-
     public InvokeScript function(String name, InvokeScriptTransaction.FunctionalArg... args) {
         if (this.call == null) {
             this.call = new FunctionCall(name);
         } else {
             this.call.setName(name);
+            //TODO clear args
         }
         Arrays.stream(args).forEach(arg -> this.call.addArg(arg));
         return this;
@@ -69,8 +70,11 @@ public class InvokeScript implements Action {
 
     @Override
     public long calcFee() {
-        //TODO add extra fees
-        return this.fee;
+        if (this.fee == 0) {
+            return MIN_FEE + EXTRA_FEE;
+        } else {
+            return this.fee;
+        }
     }
 
     @Override

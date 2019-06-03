@@ -4,29 +4,27 @@ import com.wavesplatform.wavesj.Transaction;
 import util.Account;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 
 import static util.Constants.MIN_FEE;
 
-public class SetScript implements Action {
+public class CreateAlias implements Action {
 
+    private String alias;
     private Account sender;
-    private String scriptFile;
     private long fee;
 
-    public SetScript(String scriptFile) {
-        this.scriptFile = scriptFile.isEmpty() ? null : scriptFile;
+    public CreateAlias(String alias) {
+        this.alias = alias;
         this.fee = 0;
     }
 
-    public SetScript from(Account sender) {
+    public CreateAlias from(Account sender) {
         this.sender = sender;
         return this;
     }
 
-    public SetScript withFee(long fee) {
+    public CreateAlias withFee(long fee) {
         this.fee = fee;
         return this;
     }
@@ -34,7 +32,7 @@ public class SetScript implements Action {
     @Override
     public long calcFee() {
         if (this.fee == 0) {
-            return MIN_FEE * 10;
+            return MIN_FEE;
         } else {
             return this.fee;
         }
@@ -42,10 +40,8 @@ public class SetScript implements Action {
 
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
-        String compiledScript = sender.node.wavesNode.compileScript(new String(Files.readAllBytes(Paths.get(scriptFile))));
-
-        return sender.node.waitForTransaction(sender.node.wavesNode.setScript(
-                sender.wavesAccount, compiledScript, sender.node.wavesNode.getChainId(), calcFee()));
+        return sender.node.waitForTransaction(sender.node.wavesNode.alias(
+                sender.wavesAccount, sender.node.wavesNode.getChainId(), alias, calcFee()));
     }
 
     @Override

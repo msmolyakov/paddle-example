@@ -22,15 +22,25 @@ public class Issue implements Action {
     public Issue(String name) {
         this.name = name;
         this.description = "";
-        this.quantity = 100000000;
-        this.decimals = 2;
+        this.quantity = 1000_00000000L;
+        this.decimals = 8;
         this.isReissuable = false;
         this.script = null;
-        this.fee = ONE_WAVES;
+        this.fee = 0;
     }
 
     public Issue from(Account issuer) {
         this.issuer = issuer;
+        return this;
+    }
+
+    public Issue withDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public Issue withQuantity(long quantity) {
+        this.quantity = quantity;
         return this;
     }
 
@@ -39,15 +49,36 @@ public class Issue implements Action {
         return this;
     }
 
+    public Issue reissuable(boolean isReissuable) {
+        this.isReissuable = isReissuable;
+        return this;
+    }
+
     public Issue reissuable() {
-        this.isReissuable = true;
+        return reissuable(true);
+    }
+
+    public Issue notReissuable() {
+        return reissuable(false);
+    }
+
+    public Issue withScript(String compiledBase64) {
+        this.script = compiledBase64;
+        return this;
+    }
+
+    public Issue withFee(long fee) {
+        this.fee = fee;
         return this;
     }
 
     @Override
     public long calcFee() {
-        //TODO add extra fees
-        return this.fee;
+        if (this.fee == 0) {
+            return ONE_WAVES;
+        } else {
+            return this.fee;
+        }
     }
 
     @Override

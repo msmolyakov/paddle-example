@@ -36,19 +36,15 @@ public class TestSuite {
     @Test
     public void test0() {
         /*
-        * alice.invokes().defaultFunction().butGetsError();
         * invokeScriptTx.result() shouldHave WriteSet([]);
-        *
-        * alice().reissues(); alice.burns(); alice.exchanges();
-        * alice.leases(); alice.cancelsLease(); alice.createsAlias(); alice.massTransfers();
-        * alice.writesData(); alice.sponsors(); alice.setsAssetScript();
+        * alice.exchanges();
         * alice.placesOrder(); alice.cancelsOrder();
         */
     }
 
     @Test
     public void dAppCanCreateGenesis() throws IOException, TimeoutException {
-        Transaction invoke = alice.invokes().function("genesis", arg(assetId)).withFee(900_000).successfully();
+        Transaction invoke = alice.invokes().function("genesis", arg(assetId)).withFee(900000).successfully();
 
         assertThat(alice.data(), hasSize(7));
         assertThat(alice.dataStr("assetId"), is(assetId));

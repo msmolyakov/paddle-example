@@ -3,10 +3,7 @@ package util;
 import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
-import util.actions.InvokeScript;
-import util.actions.Issue;
-import util.actions.SetScript;
-import util.actions.Transfer;
+import util.actions.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,19 +52,59 @@ public class Account {
         return ((ByteString) node.wavesNode.getDataByKey(wavesAccount.getAddress(), key).getValue()).getBytes();
     }
 
+    public Issue issues(String name) {
+        return new Issue(name).from(this);
+    }
+
     public Transfer transfers(long amount) {
         return new Transfer(amount).from(this);
+    }
+
+    public Transfer transfers(long amount, String assetId) {
+        return new Transfer(amount, assetId).from(this);
+    }
+
+    public Reissue reissues(String name) {
+        return new Reissue(name).from(this);
+    }
+
+    public Burn burns(String assetId) {
+        return new Burn(assetId).from(this);
+    }
+
+    public Lease leases(long amount) {
+        return new Lease(amount).from(this);
+    }
+
+    public LeaseCancel cancelsLease(String leaseId) {
+        return new LeaseCancel(leaseId).from(this);
+    }
+
+    public CreateAlias createsAlias(String alias) {
+        return new CreateAlias(alias).from(this);
+    }
+
+    public MassTransfer massTransfers() {
+        return new MassTransfer().from(this);
+    }
+
+    public WriteData writes(DataEntry<?>... data) {
+        return new WriteData(data).from(this);
     }
 
     public SetScript setsScript(String scriptFile) {
         return new SetScript(scriptFile).from(this);
     }
 
-    public InvokeScript invokes() {
-        return new InvokeScript().from(this);
+    public SponsorFee sponsors(String assetId) {
+        return new SponsorFee(assetId).from(this);
     }
 
-    public Issue issues(String name) {
-        return new Issue(name).from(this);
+    public SetScript setsAssetScript(String scriptFile) {
+        return new SetScript(scriptFile).from(this);
+    }
+
+    public InvokeScript invokes() {
+        return new InvokeScript().from(this);
     }
 }

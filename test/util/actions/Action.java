@@ -7,8 +7,11 @@ import java.util.concurrent.TimeoutException;
 
 public interface Action {
 
-    long calcFee();
+    //TODO static methods-constructors in each implementation: setScript(), invoke(), ...
+
+    //TODO timestamp
+    //TODO feeAssetId
+    long calcFee(); //TODO add extra fees
     Transaction successfully() throws IOException, TimeoutException;
     void butGotError();
-
 }

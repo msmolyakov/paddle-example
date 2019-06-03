@@ -8,44 +8,31 @@ import java.util.concurrent.TimeoutException;
 
 import static util.Constants.MIN_FEE;
 
-public class Transfer implements Action {
+public class Lease implements Action {
 
     private long amount;
-    private String assetId;
     private Account sender;
     private Account recipient;
-    private String attachment;
     private long fee;
 
-    public Transfer(long amount, String assetId) {
+    public Lease(long amount) {
         this.amount = amount;
-        this.assetId = assetId;
-        this.attachment = "";
         this.fee = 0;
     }
 
-    public Transfer(long amount) {
-        this(amount, null);
-    }
-
-    public Transfer from(Account sender) {
+    public Lease from(Account sender) {
         this.sender = sender;
-        if (this.recipient == null) this.recipient = this.sender;
+        if (this.recipient == null) this.recipient = this.sender; //TODO может сам себе?
         return this;
     }
 
-    public Transfer to(Account recipient) {
+    public Lease to(Account recipient) {
         this.recipient = recipient;
         if (this.sender == null) this.sender = this.recipient;
         return this;
     }
 
-    public Transfer withAttachment(String message) {
-        this.attachment = message;
-        return this;
-    }
-
-    public Transfer withFee(long fee) {
+    public Lease withFee(long fee) {
         this.fee = fee;
         return this;
     }
@@ -61,8 +48,8 @@ public class Transfer implements Action {
 
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.transfer(
-                sender.wavesAccount, recipient.wavesAccount.getAddress(), amount, assetId, calcFee(), "WAVES", attachment));
+        return sender.node.waitForTransaction(sender.node.wavesNode.lease(
+                sender.wavesAccount, recipient.wavesAccount.getAddress(), amount, calcFee()));
     }
 
     @Override
