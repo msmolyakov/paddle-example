@@ -1,10 +1,10 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.DataTransaction;
-import util.Account;
-import util.actions.data.Entry;
+import lib.Account;
+import lib.actions.data.Entry;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import static util.Constants.MIN_FEE;
+import static lib.Constants.MIN_FEE;
 
 public class WriteData implements Action {
 

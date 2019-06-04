@@ -1,8 +1,8 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.Transfer;
-import util.Account;
+import lib.Account;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import static util.Constants.MIN_FEE;
+import static lib.Constants.MIN_FEE;
 
 public class MassTransfer implements Action {
 

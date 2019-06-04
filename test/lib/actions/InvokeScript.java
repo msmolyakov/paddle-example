@@ -1,10 +1,10 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.Payment;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.FunctionCall;
-import util.Account;
+import lib.Account;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,8 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import static util.Constants.EXTRA_FEE;
-import static util.Constants.MIN_FEE;
+import static lib.Constants.EXTRA_FEE;
+import static lib.Constants.MIN_FEE;
 
 public class InvokeScript implements Action {
 

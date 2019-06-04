@@ -1,6 +1,6 @@
-package util.actions.mass;
+package lib.actions.mass;
 
-import util.Account;
+import lib.Account;
 
 public class Transfer {
 

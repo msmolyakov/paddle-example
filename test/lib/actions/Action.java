@@ -1,4 +1,4 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
 

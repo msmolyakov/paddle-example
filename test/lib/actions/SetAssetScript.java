@@ -1,32 +1,39 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
-import util.Account;
+import lib.Account;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 
-import static util.Constants.MIN_FEE;
+import static lib.Constants.ONE_WAVES;
 
-public class SetScript implements Action {
+public class SetAssetScript implements Action {
 
     private Account sender;
     private String scriptFile;
     private long fee;
+    private String assetId;
 
-    public SetScript(String scriptFile) {
+    public SetAssetScript(String scriptFile) {
         this.scriptFile = scriptFile.isEmpty() ? null : scriptFile;
+        this.assetId = null;
         this.fee = 0;
     }
 
-    public SetScript from(Account sender) {
+    public SetAssetScript from(Account sender) {
         this.sender = sender;
         return this;
     }
 
-    public SetScript withFee(long fee) {
+    public SetAssetScript to(String assetId) {
+        this.assetId = assetId;
+        return this;
+    }
+
+    public SetAssetScript withFee(long fee) {
         this.fee = fee;
         return this;
     }
@@ -34,7 +41,7 @@ public class SetScript implements Action {
     @Override
     public long calcFee() {
         if (this.fee == 0) {
-            return MIN_FEE * 10;
+            return ONE_WAVES;
         } else {
             return this.fee;
         }
@@ -44,8 +51,8 @@ public class SetScript implements Action {
     public Transaction successfully() throws IOException, TimeoutException {
         String compiledScript = sender.node.wavesNode.compileScript(new String(Files.readAllBytes(Paths.get(scriptFile))));
 
-        return sender.node.waitForTransaction(sender.node.wavesNode.setScript(
-                sender.wavesAccount, compiledScript, sender.node.wavesNode.getChainId(), calcFee()));
+        return sender.node.waitForTransaction(sender.node.wavesNode.setAssetScript(
+                sender.wavesAccount, sender.node.wavesNode.getChainId(), assetId, compiledScript, calcFee()));
     }
 
     @Override

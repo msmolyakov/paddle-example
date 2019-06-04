@@ -1,9 +1,9 @@
-package util;
+package lib;
 
 import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
-import util.actions.*;
+import lib.actions.*;
 
 import java.io.IOException;
 import java.util.List;

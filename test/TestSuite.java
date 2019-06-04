@@ -1,7 +1,7 @@
 import com.wavesplatform.wavesj.Transaction;
-import util.Account;
-import util.Version;
-import util.Node;
+import lib.Account;
+import lib.Version;
+import lib.Node;
 import com.spotify.docker.client.exceptions.DockerException;
 import org.junit.After;
 import org.junit.Before;
@@ -13,8 +13,8 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static util.Node.runDockerNode;
-import static util.actions.invoke.Arg.arg;
+import static lib.Node.runDockerNode;
+import static lib.actions.invoke.Arg.arg;
 
 public class TestSuite {
 

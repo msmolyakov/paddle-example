@@ -1,12 +1,12 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
-import util.Account;
+import lib.Account;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static util.Constants.MIN_FEE;
+import static lib.Constants.MIN_FEE;
 
 public class Burn implements Action {
 

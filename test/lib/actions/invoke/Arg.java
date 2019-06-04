@@ -1,4 +1,4 @@
-package util.actions.invoke;
+package lib.actions.invoke;
 
 import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;

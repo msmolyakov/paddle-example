@@ -1,4 +1,4 @@
-package util;
+package lib;
 
 public enum Version {
     MAINNET,

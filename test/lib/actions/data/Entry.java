@@ -1,4 +1,4 @@
-package util.actions.data;
+package lib.actions.data;
 
 import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry.*;

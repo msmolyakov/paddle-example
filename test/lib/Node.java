@@ -1,4 +1,4 @@
-package util;
+package lib;
 
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;

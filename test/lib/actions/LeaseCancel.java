@@ -1,30 +1,30 @@
-package util.actions;
+package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
-import util.Account;
+import lib.Account;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static util.Constants.MIN_FEE;
+import static lib.Constants.MIN_FEE;
 
-public class CreateAlias implements Action {
+public class LeaseCancel implements Action {
 
-    private String alias;
+    private String leaseId;
     private Account sender;
     private long fee;
 
-    public CreateAlias(String alias) {
-        this.alias = alias;
+    public LeaseCancel(String leaseId) {
+        this.leaseId = leaseId;
         this.fee = 0;
     }
 
-    public CreateAlias from(Account sender) {
+    public LeaseCancel from(Account sender) {
         this.sender = sender;
         return this;
     }
 
-    public CreateAlias withFee(long fee) {
+    public LeaseCancel withFee(long fee) {
         this.fee = fee;
         return this;
     }
@@ -40,8 +40,8 @@ public class CreateAlias implements Action {
 
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.alias(
-                sender.wavesAccount, sender.node.wavesNode.getChainId(), alias, calcFee()));
+        return sender.node.waitForTransaction(sender.node.wavesNode.cancelLease(
+                sender.wavesAccount, sender.node.wavesNode.getChainId(), leaseId, calcFee()));
     }
 
     @Override
