@@ -3,6 +3,7 @@ import lib.Account;
 import lib.Version;
 import lib.Node;
 import com.spotify.docker.client.exceptions.DockerException;
+import lib.actions.InvokeScript;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
