@@ -1,5 +1,6 @@
 package lib;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerException;
@@ -8,6 +9,11 @@ import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 import com.wavesplatform.wavesj.Transaction;
+import lib.api.NodeApi;
+import lib.api.StateChanges;
+import okhttp3.HttpUrl;
+import retrofit2.Retrofit;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -17,12 +23,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static com.fasterxml.jackson.databind.DeserializationFeature.USE_LONG_FOR_INTS;
+
 public class Node {
 
     DockerClient docker;
     String containerId = "";
     public com.wavesplatform.wavesj.Node wavesNode;
     public Account rich;
+
+    //TODO move to node.api. Provide some methods through Account
+    private Retrofit retrofit;
+    NodeApi nodeApi;
 
     public static Node runDockerNode(Version version) throws URISyntaxException, DockerException, InterruptedException {
         Node node = new Node();
@@ -52,6 +65,14 @@ public class Node {
         node.docker.startContainer(node.containerId);
 
         node.wavesNode = new com.wavesplatform.wavesj.Node("http://127.0.0.1:6869", 'R');
+        node.retrofit = new Retrofit.Builder()
+                .baseUrl(HttpUrl.get(node.wavesNode.getUri()))
+                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper()
+                        .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+                        .configure(USE_LONG_FOR_INTS, true)
+                )).build();
+        node.nodeApi = node.retrofit.create(NodeApi.class);
+
         node.rich = new Account("rich", node);
 
         //wait node readiness
@@ -82,6 +103,11 @@ public class Node {
         docker.killContainer(containerId);
         docker.removeContainer(containerId);
         docker.close();
+    }
+
+    //TODO move to node.api.debug.stateChanges()
+    public StateChanges stateChanges(String txId) throws IOException {
+        return nodeApi.stateChanges(txId).execute().body().stateChanges;
     }
 
     public Transaction waitForTransaction(String id) throws TimeoutException {
