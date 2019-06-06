@@ -4,6 +4,7 @@ import lib.Version;
 import lib.Node;
 import com.spotify.docker.client.exceptions.DockerException;
 import lib.actions.InvokeScript;
+import lib.api.StateChanges;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,13 @@ public class TestSuite {
     public void dAppCanCreateGenesis() throws IOException, TimeoutException {
         Transaction invoke = alice.invokes().function("genesis", arg(assetId)).withFee(900000).successfully();
 
+        //check state changes
+        StateChanges changes = node.stateChanges(invoke.getId().toString());
+        assertThat(changes.data, hasSize(7));
+        assertThat(changes.transfers, hasSize(0));
+        assertThat(changes.data.get(0).asString(), is(assetId));
+
+        //check dApp data
         assertThat(alice.data(), hasSize(7));
         assertThat(alice.dataStr("assetId"), is(assetId));
         assertThat(alice.dataStr("last"), not(emptyString()));
