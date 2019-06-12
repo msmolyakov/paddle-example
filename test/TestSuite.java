@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 
@@ -42,10 +43,12 @@ class TestSuite {
 
             bob.invokes(alice).function("deposit").withWavesPayment(amount).successfully();
 
-            assertEquals(1, alice.data().size());
-            assertEquals(amount, alice.dataInt(bob.address()));
+            assertAll("data and balances",
+                    () -> assertEquals(1, alice.data().size()),
+                    () -> assertEquals(amount, alice.dataInt(bob.address())),
 
-            assertEquals(aliceInitBalance + amount, alice.balance());
+                    () -> assertEquals(aliceInitBalance + amount, alice.balance())
+            );
         }
 
         @Test
@@ -55,8 +58,10 @@ class TestSuite {
 
             bob.invokes(alice).function("deposit").withWavesPayment(amount).successfully();
 
-            assertEquals(1, alice.data().size());
-            assertEquals(prevDeposit + amount, alice.dataInt(bob.address()));
+            assertAll("data",
+                    () -> assertEquals(1, alice.data().size()),
+                    () -> assertEquals(prevDeposit + amount, alice.dataInt(bob.address()))
+            );
         }
 
         @Test
@@ -66,9 +71,11 @@ class TestSuite {
 
             carol.invokes(alice).function("deposit").withWavesPayment(amount).successfully();
 
-            assertEquals(2, alice.data().size());
-            assertEquals(bobDeposit, alice.dataInt(bob.address()));
-            assertEquals(amount, alice.dataInt(carol.address()));
+            assertAll("data",
+                    () -> assertEquals(2, alice.data().size()),
+                    () -> assertEquals(bobDeposit, alice.dataInt(bob.address())),
+                    () -> assertEquals(amount, alice.dataInt(carol.address()))
+            );
         }
 
         @Test
@@ -81,12 +88,14 @@ class TestSuite {
 
             Transaction invoke = bob.invokes(alice).function("withdraw", arg(amount)).successfully();
 
-            assertEquals(2, alice.data().size());
-            assertEquals(bobDeposit - amount, alice.dataInt(bob.address()));
-            assertEquals(carolDeposit, alice.dataInt(carol.address()));
+            assertAll("data and balances",
+                    () -> assertEquals(2, alice.data().size()),
+                    () -> assertEquals(bobDeposit - amount, alice.dataInt(bob.address())),
+                    () -> assertEquals(carolDeposit, alice.dataInt(carol.address())),
 
-            assertEquals(aliceInitBalance - amount, alice.balance());
-            assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance());
+                    () -> assertEquals(aliceInitBalance - amount, alice.balance()),
+                    () -> assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance())
+            );
         }
 
         @Test
@@ -97,11 +106,13 @@ class TestSuite {
 
             Transaction invoke = bob.invokes(alice).function("withdraw", arg(amount)).successfully();
 
-            assertEquals(2, alice.data().size());
-            assertEquals(0, alice.dataInt(bob.address()));
+            assertAll("data and balances",
+                    () -> assertEquals(2, alice.data().size()),
+                    () -> assertEquals(0, alice.dataInt(bob.address())),
 
-            assertEquals(aliceInitBalance - amount, alice.balance());
-            assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance());
+                    () -> assertEquals(aliceInitBalance - amount, alice.balance()),
+                    () -> assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance())
+            );
         }
     }
 
