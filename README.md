@@ -1,4 +1,5 @@
 TODO:
+* alice.exchanges(); alice.placesOrder(); alice.cancelsOrder();
 * fix: REST API key
 * is volume needed?
 * save test logs in target/datetime subdir + waves.log + test.log

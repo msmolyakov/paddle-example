@@ -49,7 +49,7 @@ public class Lease implements Action {
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
         return sender.node.waitForTransaction(sender.node.wavesNode.lease(
-                sender.wavesAccount, recipient.wavesAccount.getAddress(), amount, calcFee()));
+                sender.wavesAccount, recipient.address(), amount, calcFee()));
     }
 
     @Override

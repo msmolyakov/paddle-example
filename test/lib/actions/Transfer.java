@@ -62,7 +62,7 @@ public class Transfer implements Action {
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
         return sender.node.waitForTransaction(sender.node.wavesNode.transfer(
-                sender.wavesAccount, recipient.wavesAccount.getAddress(), amount, assetId, calcFee(), "WAVES", attachment));
+                sender.wavesAccount, recipient.address(), amount, assetId, calcFee(), "WAVES", attachment));
     }
 
     @Override

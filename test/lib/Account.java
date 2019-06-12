@@ -28,28 +28,48 @@ public class Account {
         this.node.rich.transfers(initWavesBalance).to(this).successfully();
     }
 
+    public String seed() {
+        return this.seedText;
+    }
+
+    public byte[] privateKey() {
+        return this.wavesAccount.getPrivateKey();
+    }
+
+    public byte[] publicKey() {
+        return this.wavesAccount.getPublicKey();
+    }
+
+    public String address() {
+        return wavesAccount.getAddress();
+    }
+
+    public long balance() throws IOException {
+        return node.wavesNode.getBalance(address());
+    }
+
     public List<DataEntry> data() throws IOException {
-        return node.wavesNode.getData(wavesAccount.getAddress());
+        return node.wavesNode.getData(address());
     }
 
     public DataEntry data(String key) throws IOException {
-        return node.wavesNode.getDataByKey(wavesAccount.getAddress(), key);
+        return node.wavesNode.getDataByKey(address(), key);
     }
 
     public String dataStr(String key) throws IOException {
-        return (String) node.wavesNode.getDataByKey(wavesAccount.getAddress(), key).getValue();
+        return (String) node.wavesNode.getDataByKey(address(), key).getValue();
     }
 
     public long dataInt(String key) throws IOException {
-        return (long) node.wavesNode.getDataByKey(wavesAccount.getAddress(), key).getValue();
+        return (long) node.wavesNode.getDataByKey(address(), key).getValue();
     }
 
     public boolean dataBool(String key) throws IOException {
-        return (boolean) node.wavesNode.getDataByKey(wavesAccount.getAddress(), key).getValue();
+        return (boolean) node.wavesNode.getDataByKey(address(), key).getValue();
     }
 
     public byte[] dataBin(String key) throws IOException {
-        return ((ByteString) node.wavesNode.getDataByKey(wavesAccount.getAddress(), key).getValue()).getBytes();
+        return ((ByteString) node.wavesNode.getDataByKey(address(), key).getValue()).getBytes();
     }
 
     public Issue issues(String name) {
@@ -102,6 +122,14 @@ public class Account {
 
     public SetScript setsAssetScript(String scriptFile) {
         return new SetScript(scriptFile).from(this);
+    }
+
+    public InvokeScript invokes(String addressOrAlias) {
+        return new InvokeScript(addressOrAlias).from(this);
+    }
+
+    public InvokeScript invokes(Account dApp) {
+        return new InvokeScript(dApp.address()).from(this);
     }
 
     public InvokeScript invokes() {

@@ -27,14 +27,13 @@ public class InvokeScript implements Action {
     public InvokeScript(String addressOrAlias) {
         this.dApp = addressOrAlias.isEmpty() ? null : addressOrAlias;
         this.call = null;
-        this.dApp = null;
         this.payments = new ArrayList<>();
         this.fee = 0;
         this.feeAssetId = "WAVES";
     }
 
     public InvokeScript(Account dApp) {
-        this(dApp.wavesAccount.getAddress());
+        this(dApp.address());
     }
 
     public InvokeScript() {
@@ -43,7 +42,7 @@ public class InvokeScript implements Action {
 
     public InvokeScript from(Account sender) {
         this.sender = sender;
-        if (this.dApp == null) this.dApp = this.sender.wavesAccount.getAddress();
+        if (this.dApp == null) this.dApp = this.sender.address();
         return this;
     }
 
@@ -61,6 +60,15 @@ public class InvokeScript implements Action {
     public InvokeScript defaultFunction() {
         this.call = null;
         return this;
+    }
+
+    public InvokeScript withPayment(long amount, String assetId) {
+        this.payments.add(new Payment(amount, assetId));
+        return this;
+    }
+
+    public InvokeScript withWavesPayment(long amount) {
+        return withPayment(amount, null);
     }
 
     public InvokeScript withFee(long fee) {
