@@ -29,7 +29,6 @@ class TestSuite {
         bob = new Account("bob", node, 1000_00000000L);
         carol = new Account("carol", node, 1000_00000000L);
 
-
         alice.setsScript("wallet.ride").successfully();
     }
 

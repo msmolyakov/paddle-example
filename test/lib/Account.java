@@ -57,19 +57,19 @@ public class Account {
     }
 
     public String dataStr(String key) throws IOException {
-        return (String) node.wavesNode.getDataByKey(address(), key).getValue();
+        return (String) data(key).getValue();
     }
 
     public long dataInt(String key) throws IOException {
-        return (long) node.wavesNode.getDataByKey(address(), key).getValue();
+        return (long) data(key).getValue();
     }
 
     public boolean dataBool(String key) throws IOException {
-        return (boolean) node.wavesNode.getDataByKey(address(), key).getValue();
+        return (boolean) data(key).getValue();
     }
 
     public byte[] dataBin(String key) throws IOException {
-        return ((ByteString) node.wavesNode.getDataByKey(address(), key).getValue()).getBytes();
+        return ((ByteString) data(key).getValue()).getBytes();
     }
 
     public Issue issues(String name) {
