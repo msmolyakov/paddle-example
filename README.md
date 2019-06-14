@@ -1,21 +1,28 @@
-TODO:
-* alice.exchanges(); alice.placesOrder(); alice.cancelsOrder();
-* fix: REST API key
+MVP:
+- [ ] alice.exchanges()
+- [ ] wrap exceptions in my own
+- [ ] fix: REST API key
+- [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode
+- [ ] as setscript: truffle way (deploy, test/main values, etc)
+- [ ] tutorial article to Habr (ru, en), Medium + Travis howto
+- [ ] ${var} in contracts. Access from Env instance with specified profile
+
+IDEAS:
+* support mainnet version only?
+* imports in contracts
+* imports hub
+* unit testing
+* Jackson -> Gson
+* integration tests itself
 * is volume needed?
-* save test logs in target/datetime subdir + waves.log + test.log
-* add mainnet docker tag
-* add matcher + matcher.log into target. Fix: remove deprecated matcher settings from waves.conf
+* alice.placesOrder(); alice.cancelsOrder(); add matcher + matcher.log into target. Fix: remove deprecated matcher settings from waves.conf
 * create maven archetype
-* wrapper for prerequisites and WavesJ methods
-* truffle way (deploy, test/main values, etc)
-* publish to Hub
-* Travis
 * status badges for Github
-* article to Habr (ru, en), Medium
-* rework for js/python tests
 * support for master branch
 * support in IntelliJ plugin
 * what will be on release new version of node or WavesJ
 * is local.conf works and needed?
 * multi-stage build
-* autobuild on Docker Hub
+* Scala-friendly API
+* beautify Docker Hub page + autobuild from github
+* run tests on another non-Docker node
