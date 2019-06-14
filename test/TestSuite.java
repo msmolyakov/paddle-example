@@ -19,17 +19,23 @@ import static org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestSuite {
 
-    Node node;
-    Account alice, bob, carol;
+    private Node node;
+    private Account alice, bob, carol;
 
     @BeforeAll
     void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
         node = runDockerNode(Version.TESTNET);
+
         alice = new Account("alice", node, 1000_00000000L);
         bob = new Account("bob", node, 1000_00000000L);
         carol = new Account("carol", node, 1000_00000000L);
 
         alice.setsScript("wallet.ride").successfully();
+    }
+
+    @AfterAll
+    void after() throws DockerException, InterruptedException {
+        node.stopDockerNode();
     }
 
     @Nested
@@ -113,11 +119,6 @@ class TestSuite {
                     () -> assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance())
             );
         }
-    }
-
-    @AfterAll
-    void after() throws DockerException, InterruptedException {
-        node.stopDockerNode();
     }
 
 }
