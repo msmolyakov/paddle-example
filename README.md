@@ -1,5 +1,7 @@
 MVP:
-- [ ] alice.exchanges()
+- [x] alice.exchanges()
+- [ ] correctly calc all fees
+- [ ] handle txs error `butGotError()`
 - [ ] wrap exceptions in my own
 - [ ] fix: REST API key
 - [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode

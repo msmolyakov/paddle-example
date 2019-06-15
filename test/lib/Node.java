@@ -105,6 +105,14 @@ public class Node {
         docker.close();
     }
 
+    public boolean isSmart(String address) throws IOException {
+        return nodeApi.scriptInfo(address).execute().body().extraFee > 0;
+    }
+
+    public boolean isSmart(Account account) throws IOException {
+        return isSmart(account.address());
+    }
+
     //TODO move to node.api.debug.stateChanges()
     public StateChanges stateChanges(String txId) throws IOException {
         return nodeApi.stateChanges(txId).execute().body().stateChanges;

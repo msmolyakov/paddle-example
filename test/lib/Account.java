@@ -4,6 +4,7 @@ import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import lib.actions.*;
+import lib.actions.exchange.Order;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,6 +43,10 @@ public class Account {
 
     public String address() {
         return wavesAccount.getAddress();
+    }
+
+    public boolean isSmart() throws IOException {
+        return node.isSmart(address());
     }
 
     public long balance() throws IOException {
@@ -90,6 +95,10 @@ public class Account {
 
     public Burn burns(String assetId) {
         return new Burn(assetId).from(this);
+    }
+
+    public Exchange exchanges(Order buy, Order sell) {
+        return new Exchange(buy, sell).from(this);
     }
 
     public Lease leases(long amount) {
