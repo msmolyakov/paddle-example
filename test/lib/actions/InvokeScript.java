@@ -76,12 +76,22 @@ public class InvokeScript implements Action {
         return this;
     }
 
+    /**
+     * Важно! Не учитывает переводы смарт ассетов через TransferSet.
+     * В таком случае комиссию можно указывать самостоятельно: `invoke.withFee(invoke.calcFee() + EXTRA_FEE)`
+     * @return
+     * @throws IOException
+     */
     @Override
-    public long calcFee() {
-        if (this.fee == 0) {
-            return MIN_FEE + EXTRA_FEE;
-        } else {
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
             return this.fee;
+        } else {
+            long totalFee = MIN_FEE + EXTRA_FEE;
+            totalFee += sender.isSmart() ? EXTRA_FEE : 0;
+            for (Payment pmt : payments)
+                totalFee += sender.node.isSmart(pmt.getAssetId()) ? EXTRA_FEE : 0;
+            return totalFee;
         }
     }
 

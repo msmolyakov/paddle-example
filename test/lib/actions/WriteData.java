@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 
 public class WriteData implements Action {
@@ -56,12 +57,17 @@ public class WriteData implements Action {
     }
 
     @Override
-    public long calcFee() {
-        if (this.fee == 0) {
-            byte[] bytes = new DataTransaction(sender.wavesAccount, data, calcFee(), System.currentTimeMillis()).getBodyBytes();
-            return MIN_FEE + ((bytes.length - 1) / 1024) * MIN_FEE;
-        } else {
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
             return this.fee;
+        } else {
+            long totalFee = MIN_FEE;
+            totalFee += sender.isSmart() ? EXTRA_FEE : 0;
+
+            byte[] bytes = new DataTransaction(sender.wavesAccount, data, calcFee(), System.currentTimeMillis()).getBodyBytes();
+            totalFee += ((bytes.length - 1) / 1024) * MIN_FEE;
+
+            return totalFee;
         }
     }
 

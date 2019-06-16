@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 
+import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
 
 public class SetAssetScript implements Action {
@@ -39,11 +40,14 @@ public class SetAssetScript implements Action {
     }
 
     @Override
-    public long calcFee() {
-        if (this.fee == 0) {
-            return ONE_WAVES;
-        } else {
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
             return this.fee;
+        } else {
+            long totalFee = ONE_WAVES;
+            totalFee += sender.isSmart() ? EXTRA_FEE : 0;
+            totalFee += sender.node.isSmart(assetId) ? EXTRA_FEE : 0;
+            return totalFee;
         }
     }
 

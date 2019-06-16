@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 
 public class MassTransfer implements Action {
@@ -53,11 +54,15 @@ public class MassTransfer implements Action {
     }
 
     @Override
-    public long calcFee() {
-        if (this.fee == 0) {
-            return MIN_FEE + (transfers.size() + 1) / 2;
-        } else {
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
             return this.fee;
+        } else {
+            long totalFee = MIN_FEE;
+            totalFee += sender.isSmart() ? EXTRA_FEE : 0;
+            totalFee += sender.node.isSmart(assetId) ? EXTRA_FEE : 0;
+            totalFee += (transfers.size() + 1) / 2;
+            return totalFee;
         }
     }
 

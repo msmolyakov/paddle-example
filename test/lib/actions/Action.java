@@ -11,7 +11,7 @@ public interface Action {
 
     //TODO timestamp
     //TODO feeAssetId
-    long calcFee(); //TODO add extra fees
+    long calcFee() throws IOException;
     Transaction successfully() throws IOException, TimeoutException;
     void butGotError();
 }

@@ -105,8 +105,13 @@ public class Node {
         docker.close();
     }
 
-    public boolean isSmart(String address) throws IOException {
-        return nodeApi.scriptInfo(address).execute().body().extraFee > 0;
+    public boolean isSmart(String assetIdOrAddress) throws IOException {
+        if (assetIdOrAddress == null || assetIdOrAddress.isEmpty() || "WAVES".equals(assetIdOrAddress))
+            return false;
+        else if (assetIdOrAddress.length() > 40) {
+            return nodeApi.assetDetails(assetIdOrAddress, false).execute().body().scripted;
+        } else
+            return nodeApi.scriptInfo(assetIdOrAddress).execute().body().extraFee > 0;
     }
 
     public boolean isSmart(Account account) throws IOException {

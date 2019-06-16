@@ -9,6 +9,7 @@ import lib.actions.exchange.Order;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
+import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 import static lib.actions.exchange.OrderType.BUY;
 import static lib.actions.exchange.OrderType.SELL;
@@ -73,8 +74,14 @@ public class Exchange implements Action {
     }
 
     @Override
-    public long calcFee() {
-        return this.fee == 0 ? MIN_FEE * 3 : this.fee; //TODO invert to "> 0" here and everywhere
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
+            return this.fee;
+        } else {
+            long totalFee = buy.calcMatcherFee();
+            totalFee += sell.sender.isSmart() ? EXTRA_FEE : 0;
+            return totalFee;
+        }
     }
 
     @Override
@@ -83,10 +90,10 @@ public class Exchange implements Action {
         long now = System.currentTimeMillis();
         long nowPlus29Days = now + 2505600000L;
 
-        com.wavesplatform.wavesj.matcher.Order buyV2 = new OrderV2(buy.sender.wavesAccount, buy.matcher.wavesAccount,
+        OrderV2 buyV2 = new OrderV2(buy.sender.wavesAccount, buy.matcher.wavesAccount,
                 buy.type == BUY ? Type.BUY : Type.SELL, buy.pair, buy.amount, buy.price, 
                 now, nowPlus29Days, buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
-        com.wavesplatform.wavesj.matcher.Order sellV2 = new OrderV2(sell.sender.wavesAccount, sell.matcher.wavesAccount,
+        OrderV2 sellV2 = new OrderV2(sell.sender.wavesAccount, sell.matcher.wavesAccount,
                 sell.type == SELL ? Type.SELL : Type.SELL, sell.pair, sell.amount, sell.price,
                 now, nowPlus29Days, buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
 

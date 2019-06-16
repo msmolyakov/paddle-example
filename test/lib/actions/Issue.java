@@ -6,6 +6,7 @@ import lib.Account;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
+import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
 
 public class Issue implements Action {
@@ -73,11 +74,13 @@ public class Issue implements Action {
     }
 
     @Override
-    public long calcFee() {
-        if (this.fee == 0) {
-            return ONE_WAVES;
-        } else {
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
             return this.fee;
+        } else {
+            long totalFee = ONE_WAVES;
+            totalFee += issuer.isSmart() ? EXTRA_FEE : 0;
+            return totalFee;
         }
     }
 

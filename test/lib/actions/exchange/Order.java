@@ -3,6 +3,9 @@ package lib.actions.exchange;
 import com.wavesplatform.wavesj.AssetPair;
 import lib.Account;
 
+import java.io.IOException;
+
+import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 import static lib.actions.exchange.OrderType.BUY;
 import static lib.actions.exchange.OrderType.SELL;
@@ -58,12 +61,21 @@ public class Order {
     }
 
     public Order matcherFee(long fee) {
-        this.sender = sender;
+        this.matcherFee = fee;
         return this;
     }
 
-    public long calcMatcherFee() {
-        return matcherFee > 0 ? matcherFee : MIN_FEE * 3; //TODO check smart
+    public long calcMatcherFee() throws IOException {
+        if (matcherFee > 0)
+            return matcherFee;
+        else {
+            long fee = MIN_FEE * 3;
+            fee += matcher.isSmart() ? EXTRA_FEE : 0; //TODO проверять, требует ли он extra fee за это (в Exchange тоже)
+            fee += sender.isSmart() ? EXTRA_FEE : 0;
+            fee += sender.node.isSmart(pair.getAmountAsset()) ? EXTRA_FEE : 0;
+            fee += sender.node.isSmart(pair.getPriceAsset()) ? EXTRA_FEE : 0;
+            return fee;
+        }
     }
 
 }

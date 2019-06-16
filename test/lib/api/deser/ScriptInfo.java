@@ -1,4 +1,4 @@
-package lib.api;
+package lib.api.deser;
 
 public class ScriptInfo {
 

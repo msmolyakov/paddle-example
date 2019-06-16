@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 
-import static lib.Constants.MIN_FEE;
+import static lib.Constants.*;
 
 public class SetScript implements Action {
 
@@ -32,11 +32,13 @@ public class SetScript implements Action {
     }
 
     @Override
-    public long calcFee() {
-        if (this.fee == 0) {
-            return MIN_FEE * 10;
-        } else {
+    public long calcFee() throws IOException {
+        if (this.fee > 0) {
             return this.fee;
+        } else {
+            long totalFee = MIN_FEE * 10;
+            totalFee += sender.isSmart() ? EXTRA_FEE : 0;
+            return totalFee;
         }
     }
 

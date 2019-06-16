@@ -1,6 +1,6 @@
 MVP:
 - [x] alice.exchanges()
-- [ ] correctly calc all fees
+- [x] correctly calc all fees
 - [ ] handle txs error `butGotError()`
 - [ ] wrap exceptions in my own
 - [ ] fix: REST API key
