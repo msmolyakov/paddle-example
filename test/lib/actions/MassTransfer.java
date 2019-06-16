@@ -15,11 +15,11 @@ import static lib.Constants.MIN_FEE;
 
 public class MassTransfer implements Action {
 
-    private Account sender;
-    private String assetId;
-    private List<Transfer> transfers;
-    private String attachment;
-    private long fee;
+    public Account sender;
+    public String assetId;
+    public List<Transfer> transfers;
+    public String attachment;
+    public long fee;
 
     //TODO может быть без получателей?
     public MassTransfer(String assetId) {

@@ -12,10 +12,10 @@ import static lib.Constants.ONE_WAVES;
 //TODO отмена спонсорства
 public class SponsorFee implements Action {
 
-    private Account sender;
-    private String assetId;
-    private long minSponsoredAssetFee;
-    private long fee;
+    public Account sender;
+    public String assetId;
+    public long minSponsoredAssetFee;
+    public long fee;
 
     public SponsorFee(String assetId) {
         this.assetId = assetId;

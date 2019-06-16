@@ -17,9 +17,9 @@ import static lib.Constants.MIN_FEE;
 
 public class WriteData implements Action {
 
-    private List<DataEntry<?>> data;
-    private Account sender;
-    private long fee;
+    public List<DataEntry<?>> data;
+    public Account sender;
+    public long fee;
 
     public WriteData(DataEntry<?>... data) {
         this.data = new LinkedList<>(Arrays.asList(data));

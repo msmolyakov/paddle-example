@@ -11,14 +11,14 @@ import static lib.Constants.ONE_WAVES;
 
 public class Issue implements Action {
 
-    private Account issuer;
-    private String name;
-    private String description;
-    private long quantity;
-    private byte decimals;
-    private boolean isReissuable;
-    private String script;
-    private long fee;
+    public Account issuer;
+    public String name;
+    public String description;
+    public long quantity;
+    public byte decimals;
+    public boolean isReissuable;
+    public String script;
+    public long fee;
 
     public Issue(String name) {
         this.name = name;

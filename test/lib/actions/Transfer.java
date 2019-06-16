@@ -11,12 +11,12 @@ import static lib.Constants.MIN_FEE;
 
 public class Transfer implements Action {
 
-    private long amount;
-    private String assetId;
-    private Account sender;
-    private Account recipient;
-    private String attachment;
-    private long fee;
+    public long amount;
+    public String assetId;
+    public Account sender;
+    public Account recipient;
+    public String attachment;
+    public long fee;
 
     public Transfer(long amount, String assetId) {
         this.amount = amount;

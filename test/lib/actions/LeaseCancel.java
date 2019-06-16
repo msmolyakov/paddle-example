@@ -10,9 +10,9 @@ import static lib.Constants.*;
 
 public class LeaseCancel implements Action {
 
-    private String leaseId;
-    private Account sender;
-    private long fee;
+    public String leaseId;
+    public Account sender;
+    public long fee;
 
     public LeaseCancel(String leaseId) {
         this.leaseId = leaseId;

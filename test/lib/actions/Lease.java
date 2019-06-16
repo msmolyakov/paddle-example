@@ -10,10 +10,10 @@ import static lib.Constants.*;
 
 public class Lease implements Action {
 
-    private long amount;
-    private Account sender;
-    private Account recipient;
-    private long fee;
+    public long amount;
+    public Account sender;
+    public Account recipient;
+    public long fee;
 
     public Lease(long amount) {
         this.amount = amount;

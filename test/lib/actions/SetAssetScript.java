@@ -13,10 +13,10 @@ import static lib.Constants.ONE_WAVES;
 
 public class SetAssetScript implements Action {
 
-    private Account sender;
-    private String scriptFile;
-    private long fee;
-    private String assetId;
+    public Account sender;
+    public String scriptFile;
+    public long fee;
+    public String assetId;
 
     public SetAssetScript(String scriptFile) {
         this.scriptFile = scriptFile.isEmpty() ? null : scriptFile;

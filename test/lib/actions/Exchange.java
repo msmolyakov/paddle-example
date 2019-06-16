@@ -16,14 +16,14 @@ import static lib.actions.exchange.OrderType.SELL;
 
 public class Exchange implements Action {
 
-    private Account sender; //TODO make all public in all actions
-    private Order buy;
-    private Order sell;
-    private long amount;
-    private long price;
-    private long buyMatcherFee;
-    private long sellMatcherFee;
-    private long fee;
+    public Account sender;
+    public Order buy;
+    public Order sell;
+    public long amount;
+    public long price;
+    public long buyMatcherFee;
+    public long sellMatcherFee;
+    public long fee;
 
     public Exchange(Order buy, Order sell) {
         this.buy = buy;

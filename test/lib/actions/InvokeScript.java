@@ -17,12 +17,12 @@ import static lib.Constants.MIN_FEE;
 
 public class InvokeScript implements Action {
 
-    private Account sender;
-    private String dApp;
-    private FunctionCall call;
-    private List<Payment> payments;
-    private long fee;
-    private String feeAssetId;
+    public Account sender;
+    public String dApp;
+    public FunctionCall call;
+    public List<Payment> payments;
+    public long fee;
+    public String feeAssetId;
 
     public InvokeScript(String addressOrAlias) {
         this.dApp = addressOrAlias.isEmpty() ? null : addressOrAlias;

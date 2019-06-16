@@ -11,10 +11,10 @@ import static lib.Constants.MIN_FEE;
 
 public class Burn implements Action {
 
-    private Account issuer;
-    private String assetId;
-    private long quantity;
-    private long fee;
+    public Account issuer;
+    public String assetId;
+    public long quantity;
+    public long fee;
 
     public Burn(String assetId) {
         this.assetId = assetId;

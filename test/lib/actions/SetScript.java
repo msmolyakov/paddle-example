@@ -12,9 +12,9 @@ import static lib.Constants.*;
 
 public class SetScript implements Action {
 
-    private Account sender;
-    private String scriptFile;
-    private long fee;
+    public Account sender;
+    public String scriptFile;
+    public long fee;
 
     public SetScript(String scriptFile) {
         this.scriptFile = scriptFile.isEmpty() ? null : scriptFile;

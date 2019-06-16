@@ -11,11 +11,11 @@ import static lib.Constants.ONE_WAVES;
 
 public class Reissue implements Action {
 
-    private Account issuer;
-    private String assetId;
-    private long quantity;
-    private boolean isReissuable;
-    private long fee;
+    public Account issuer;
+    public String assetId;
+    public long quantity;
+    public boolean isReissuable;
+    public long fee;
 
     public Reissue(String assetId) {
         this.assetId = assetId;

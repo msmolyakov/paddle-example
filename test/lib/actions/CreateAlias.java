@@ -11,9 +11,9 @@ import static lib.Constants.MIN_FEE;
 
 public class CreateAlias implements Action {
 
-    private String alias;
-    private Account sender;
-    private long fee;
+    public String alias;
+    public Account sender;
+    public long fee;
 
     public CreateAlias(String alias) {
         this.alias = alias;
