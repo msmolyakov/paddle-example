@@ -37,7 +37,7 @@ public class Node {
     private Retrofit retrofit;
     NodeApi nodeApi;
 
-    public static Node runDockerNode(Version version) throws URISyntaxException, DockerException, InterruptedException {
+    public static Node runDockerNode(Version version) throws URISyntaxException, DockerException, InterruptedException, IOException, TimeoutException {
         Node node = new Node();
         String tag = version == Version.MAINNET ? "mainnet" : "testnet";
 

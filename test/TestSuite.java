@@ -26,9 +26,9 @@ class TestSuite {
     void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
         node = runDockerNode(Version.TESTNET);
 
-        alice = new Account("alice", node, 1000_00000000L);
-        bob = new Account("bob", node, 1000_00000000L);
-        carol = new Account("carol", node, 1000_00000000L);
+        alice = new Account(node, 1_00000000L);
+        bob = new Account(node, 1_00000000L);
+        carol = new Account(node, 1_00000000L);
 
         alice.setsScript("wallet.ride").successfully();
     }
