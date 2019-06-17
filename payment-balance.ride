@@ -1,0 +1,24 @@
+{-# STDLIB_VERSION 3 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+@Callable(inv)
+func some(to: String) = {
+    let pmt = inv.payment.extract()
+    let recipient = Address(to.fromBase58String())
+
+    let ownBalance = assetBalance(this, pmt.assetId)
+    let callerBalance = assetBalance(inv.caller, pmt.assetId)
+    let recipientBalance = assetBalance(recipient, pmt.assetId)
+
+    ScriptResult(
+        WriteSet([
+            DataEntry("own", ownBalance),
+            DataEntry("caller", callerBalance),
+            DataEntry("recipient", recipientBalance)
+        ]),
+        TransferSet([
+            ScriptTransfer(recipient, pmt.amount + ownBalance, pmt.assetId)
+        ])
+    )
+}
