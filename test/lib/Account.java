@@ -62,6 +62,10 @@ public class Account {
         return node.wavesNode.getBalance(address());
     }
 
+    public long assetBalance(String assetId) throws IOException {
+        return node.wavesNode.getBalance(address(), assetId);
+    }
+
     public List<DataEntry> data() throws IOException {
         return node.wavesNode.getData(address());
     }
