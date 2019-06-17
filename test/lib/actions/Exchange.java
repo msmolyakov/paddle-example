@@ -9,7 +9,6 @@ import lib.actions.exchange.Order;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 import static lib.actions.exchange.OrderType.BUY;
 import static lib.actions.exchange.OrderType.SELL;
@@ -65,6 +64,14 @@ public class Exchange implements Action {
         return this;
     }
 
+    public long calcAmount() {
+        return amount > 0 ? amount : Math.min(buy.amount, sell.amount);
+    }
+
+    public long calcPrice() {
+        return price > 0 ? price : buy.price;
+    }
+
     public long calcBuyMatcherFee() {
         return buyMatcherFee > 0 ? buyMatcherFee : MIN_FEE * 3; //TODO proportionally from amount/price and order fee
     }
@@ -84,7 +91,6 @@ public class Exchange implements Action {
 
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
-        //TODO calc amount and price if 0
         long now = System.currentTimeMillis();
         long nowPlus29Days = now + 2505600000L;
 
@@ -96,7 +102,7 @@ public class Exchange implements Action {
                 now, nowPlus29Days, buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
 
         return sender.node.waitForTransaction(sender.node.wavesNode.exchange(sender.wavesAccount,
-                buyV2, sellV2, amount, price, calcBuyMatcherFee(), calcSellMatcherFee(), calcFee()));
+                buyV2, sellV2, calcAmount(), calcPrice(), calcBuyMatcherFee(), calcSellMatcherFee(), calcFee()));
     }
 
     @Override
