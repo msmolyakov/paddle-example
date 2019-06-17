@@ -78,9 +78,7 @@ public class Exchange implements Action {
         if (this.fee > 0) {
             return this.fee;
         } else {
-            long totalFee = buy.calcMatcherFee();
-            totalFee += sell.sender.isSmart() ? EXTRA_FEE : 0;
-            return totalFee;
+            return buy.calcMatcherFee();
         }
     }
 
