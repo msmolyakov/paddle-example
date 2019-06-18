@@ -11,6 +11,7 @@ import com.spotify.docker.client.messages.PortBinding;
 import com.wavesplatform.wavesj.Transaction;
 import lib.api.NodeApi;
 import lib.api.StateChanges;
+import lib.api.deser.AssetDetails;
 import okhttp3.HttpUrl;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -105,11 +106,15 @@ public class Node {
         docker.close();
     }
 
+    public AssetDetails assetDetails(String assetId) throws IOException {
+        return nodeApi.assetDetails(assetId, false).execute().body();
+    }
+
     public boolean isSmart(String assetIdOrAddress) throws IOException {
         if (assetIdOrAddress == null || assetIdOrAddress.isEmpty() || "WAVES".equals(assetIdOrAddress))
             return false;
         else if (assetIdOrAddress.length() > 40) {
-            return nodeApi.assetDetails(assetIdOrAddress, false).execute().body().scripted;
+            return assetDetails(assetIdOrAddress).scripted;
         } else
             return nodeApi.scriptInfo(assetIdOrAddress).execute().body().extraFee > 0;
     }
