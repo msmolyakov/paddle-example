@@ -64,7 +64,7 @@ public class WriteData implements Action {
             long totalFee = MIN_FEE;
             totalFee += sender.isSmart() ? EXTRA_FEE : 0;
 
-            byte[] bytes = new DataTransaction(sender.wavesAccount, data, calcFee(), System.currentTimeMillis()).getBodyBytes();
+            byte[] bytes = new DataTransaction(sender.wavesAccount, data, 1, System.currentTimeMillis()).getBodyBytes();
             totalFee += ((bytes.length - 1) / 1024) * MIN_FEE;
 
             return totalFee;
