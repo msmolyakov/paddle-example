@@ -135,15 +135,15 @@ public class Account {
     }
 
     public SetScript setsScript(String scriptFile) {
-        return new SetScript(scriptFile).from(this);
+        return new SetScript(scriptFile.endsWith(".ride") ? scriptFile : scriptFile + ".ride").from(this);
     }
 
     public SponsorFee sponsors(String assetId) {
         return new SponsorFee(assetId).from(this);
     }
 
-    public SetScript setsAssetScript(String scriptFile) {
-        return new SetScript(scriptFile).from(this);
+    public SetAssetScript setsAssetScript(String scriptFile, String assetId) {
+        return new SetAssetScript(scriptFile.endsWith(".ride") ? scriptFile : scriptFile + ".ride", assetId).from(this);
     }
 
     public InvokeScript invokes(String addressOrAlias) {

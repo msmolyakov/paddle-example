@@ -18,19 +18,14 @@ public class SetAssetScript implements Action {
     public long fee;
     public String assetId;
 
-    public SetAssetScript(String scriptFile) {
+    public SetAssetScript(String scriptFile, String assetId) {
         this.scriptFile = scriptFile.isEmpty() ? null : scriptFile;
-        this.assetId = null;
+        this.assetId = assetId;
         this.fee = 0;
     }
 
     public SetAssetScript from(Account sender) {
         this.sender = sender;
-        return this;
-    }
-
-    public SetAssetScript to(String assetId) {
-        this.assetId = assetId;
         return this;
     }
 
