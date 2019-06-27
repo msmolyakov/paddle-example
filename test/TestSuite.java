@@ -24,7 +24,7 @@ class TestSuite {
 
     @BeforeAll
     void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
-        node = runDockerNode(Version.TESTNET);
+        node = runDockerNode(Version.MAINNET);
 
         alice = new Account(node, 1_00000000L);
         bob = new Account(node, 1_00000000L);
