@@ -7,12 +7,11 @@ MVP:
 - [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode
 - [ ] as setscript: truffle way (deploy, test/main values, etc)
 - [ ] tutorial article to Habr (ru, en), Medium + Travis howto
-- [ ] ${var} in contracts. Access from Env instance with specified profile
 
 IDEAS:
+* ${var} in contracts. Access from Env instance with specified profile
+* imports in contracts + imports hub
 * support mainnet version only?
-* imports in contracts
-* imports hub
 * unit testing
 * Jackson -> Gson
 * integration tests itself

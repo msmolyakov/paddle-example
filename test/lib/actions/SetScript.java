@@ -6,6 +6,7 @@ import lib.Account;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.*;
@@ -44,7 +45,9 @@ public class SetScript implements Action {
 
     @Override
     public Transaction successfully() throws IOException, TimeoutException {
-        String compiledScript = sender.node.wavesNode.compileScript(new String(Files.readAllBytes(Paths.get(scriptFile))));
+        List<String> lines = Files.readAllLines(Paths.get(scriptFile)); //TODO Issue, SetAssetScript
+        String script = String.join("\n", lines);
+        String compiledScript = sender.node.wavesNode.compileScript(script);
 
         return sender.node.waitForTransaction(sender.node.wavesNode.setScript(
                 sender.wavesAccount, compiledScript, sender.node.wavesNode.getChainId(), calcFee()));
