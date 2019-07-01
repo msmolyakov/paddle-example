@@ -9,14 +9,20 @@ import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 import com.wavesplatform.wavesj.Transaction;
+import lib.api.Api;
 import lib.api.NodeApi;
 import lib.api.StateChanges;
 import lib.api.deser.AssetDetails;
+import lib.api.exceptions.NodeError;
 import okhttp3.HttpUrl;
+import okhttp3.ResponseBody;
+import retrofit2.Converter;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,12 +37,12 @@ public class Node {
 
     DockerClient docker;
     String containerId = "";
+    @Deprecated
     public com.wavesplatform.wavesj.Node wavesNode;
     public Account rich;
 
     //TODO move to node.api. Provide some methods through Account
-    private Retrofit retrofit;
-    NodeApi nodeApi;
+    public Api api;
 
     public static Node runDockerNode(Version version) throws URISyntaxException, DockerException, InterruptedException, IOException, TimeoutException {
         Node node = new Node();
@@ -66,13 +72,7 @@ public class Node {
         node.docker.startContainer(node.containerId);
 
         node.wavesNode = new com.wavesplatform.wavesj.Node("http://127.0.0.1:6869", 'R');
-        node.retrofit = new Retrofit.Builder()
-                .baseUrl(HttpUrl.get(node.wavesNode.getUri()))
-                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper()
-                        .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-                        .configure(USE_LONG_FOR_INTS, true)
-                )).build();
-        node.nodeApi = node.retrofit.create(NodeApi.class);
+        node.api = new Api(node.wavesNode.getUri());
 
         node.rich = new Account("rich", node);
 
@@ -106,8 +106,18 @@ public class Node {
         docker.close();
     }
 
-    public AssetDetails assetDetails(String assetId) throws IOException {
-        return nodeApi.assetDetails(assetId, false).execute().body();
+
+    public AssetDetails assetDetails(String assetId) {
+        try {
+            Response<AssetDetails> r = nodeApi.assetDetails(assetId, false).execute();
+            if (r.isSuccessful())
+                return r.body();
+            else {
+                throw parseError(r);
+            }
+        } catch (IOException e) {
+            throw new NodeError(-1, "unknown error");
+        }
     }
 
     public boolean isSmart(String assetIdOrAddress) throws IOException {

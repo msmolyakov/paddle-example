@@ -2,6 +2,7 @@ package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
+import lib.api.exceptions.NodeError;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -64,9 +65,13 @@ public class Transfer implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.transfer(
-                sender.wavesAccount, recipient.address(), amount, assetId, calcFee(), "WAVES", attachment));
+    public Transaction successfully() {
+        try {
+            return sender.node.waitForTransaction(sender.node.wavesNode.transfer(
+                    sender.wavesAccount, recipient.address(), amount, assetId, calcFee(), "WAVES", attachment));
+        } catch (IOException | TimeoutException e) {
+            throw new NodeError(-1, "unknown error");
+        }
     }
 
     @Override

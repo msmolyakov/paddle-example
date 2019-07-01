@@ -13,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 
 public class Account {
 
+    @Deprecated
     public PrivateKeyAccount wavesAccount;
     private String seedText;
     public Node node;
