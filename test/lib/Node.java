@@ -9,14 +9,19 @@ import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 import com.wavesplatform.wavesj.Transaction;
+import lib.api.ErrorHandlingAdapter;
 import lib.api.NodeApi;
 import lib.api.StateChanges;
 import lib.api.deser.AssetDetails;
 import okhttp3.HttpUrl;
+import retrofit2.CallAdapter;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +42,29 @@ public class Node {
     //TODO move to node.api. Provide some methods through Account
     private Retrofit retrofit;
     NodeApi nodeApi;
+
+    public static Node connectToNode(String uri, char chainId) throws URISyntaxException, IOException, TimeoutException {
+        Node node = new Node();
+        node.wavesNode = new com.wavesplatform.wavesj.Node(uri, chainId);
+
+        node.retrofit = new Retrofit.Builder()
+                .baseUrl(HttpUrl.get(node.wavesNode.getUri()))
+                /*.addCallAdapterFactory(new CallAdapter.Factory() {
+                    @Nullable
+                    @Override
+                    public CallAdapter<?, ?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
+                        return null;
+                    }
+                })*/
+                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper()
+                        .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+                        .configure(USE_LONG_FOR_INTS, true)
+                )).build();
+        node.nodeApi = node.retrofit.create(NodeApi.class);
+
+        node.rich = new Account("create genesis wallet devnet-0-d", node);
+        return node;
+    }
 
     public static Node runDockerNode(Version version) throws URISyntaxException, DockerException, InterruptedException, IOException, TimeoutException {
         Node node = new Node();
@@ -68,6 +96,7 @@ public class Node {
         node.wavesNode = new com.wavesplatform.wavesj.Node("http://127.0.0.1:6869", 'R');
         node.retrofit = new Retrofit.Builder()
                 .baseUrl(HttpUrl.get(node.wavesNode.getUri()))
+                .addCallAdapterFactory(new ErrorHandlingAdapter.ErrorHandlingCallAdapterFactory())
                 .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper()
                         .configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
                         .configure(USE_LONG_FOR_INTS, true)

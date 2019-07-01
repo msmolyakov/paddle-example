@@ -1,10 +1,11 @@
 MVP:
 - [x] alice.exchanges()
 - [x] correctly calc all fees
-- [ ] handle txs error `butGotError()`
 - [ ] wrap exceptions in my own
+- [ ] handle txs error `butGotError()`
 - [ ] fix: REST API key
 - [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode
+- [ ] AssertJ
 - [ ] as setscript: truffle way (deploy, test/main values, etc)
 - [ ] tutorial article to Habr (ru, en), Medium + Travis howto
 
