@@ -135,8 +135,16 @@ public class Account {
         return new Reissue(name).from(this);
     }
 
-    public Burn burns(String assetId) {
-        return new Burn(assetId).from(this);
+    public BurnTransaction burns(Consumer<Burn> burn) {
+        Burn b = new Burn().from(this);
+        burn.accept(b);
+
+        try {
+            return (BurnTransaction) node.waitForTransaction(node.wavesNode.burnAsset(
+                    b.issuer.wavesAccount, node.wavesNode.getChainId(), b.assetId, b.quantity, b.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public ExchangeTransaction exchanges(Consumer<Exchange> exchange) {
