@@ -72,21 +72,31 @@ public class Node {
             node.rich = new Account("waves private node seed with waves tokens", node);
 
             //wait node readiness
+            boolean isNodeReady = false;
             Thread.sleep(8000);
             for (int repeat = 0; repeat < 6; repeat++) {
                 try {
-                    node.wavesNode.getVersion();
+                    node.getVersion();
+                    isNodeReady = true;
                     break;
-                } catch (IOException e) {
+                } catch (NodeError e) {
                     try {
                         Thread.sleep(2000);
-                    } catch (InterruptedException ignore) {
-                    }
+                    } catch (InterruptedException ignore) {}
                 }
             }
+            if (!isNodeReady) throw new NodeError("Could not wait for node readiness");
 
             return node;
         } catch (URISyntaxException | DockerException | InterruptedException e) {
+            throw new NodeError(e);
+        }
+    }
+
+    private String getVersion() {
+        try {
+            return wavesNode.getVersion();
+        } catch (IOException e) {
             throw new NodeError(e);
         }
     }
@@ -128,4 +138,15 @@ public class Node {
         throw new NodeError("Could not wait for transaction " + id + " in 10 seconds");
     }
 
+    public byte getChainId() {
+        return wavesNode.getChainId();
+    }
+
+    public String compileScript(String s) {
+        try {
+            return wavesNode.compileScript(s);
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
+    }
 }

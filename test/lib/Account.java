@@ -5,14 +5,19 @@ import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
+import com.wavesplatform.wavesj.transactions.SetAssetScriptTransaction;
 import lib.actions.*;
 import lib.actions.exchange.Order;
 import lib.exceptions.NodeError;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+
+import static java.nio.file.Files.readAllBytes;
 
 public class Account {
 
@@ -162,8 +167,22 @@ public class Account {
         return new SponsorFee(assetId).from(this);
     }
 
-    public SetAssetScript setsAssetScript(String scriptFile, String assetId) {
-        return new SetAssetScript(scriptFile.endsWith(".ride") ? scriptFile : scriptFile + ".ride", assetId).from(this);
+    public SetAssetScriptTransaction setsAssetScript(Consumer<SetAssetScript> setAssetScript) {
+        SetAssetScript s = new SetAssetScript().from(this);
+        setAssetScript.accept(s);
+
+        if (s.sender == null) throw new NodeError("Sender not specified");
+        if (s.assetId == null || s.assetId.isEmpty()) throw new NodeError("Asset id not specified");
+
+        try {
+            String compiledScript = node.compileScript(new String(readAllBytes(Paths.get(s.scriptFile))));
+
+            return (SetAssetScriptTransaction) node.waitForTransaction(node.wavesNode.setAssetScript(
+                    s.sender.wavesAccount, s.sender.node.getChainId(), s.assetId, compiledScript, s.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
+
     }
 
     public InvokeScriptTransaction invokes(Consumer<InvokeScript> invokeScript) {
