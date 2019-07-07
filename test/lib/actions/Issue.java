@@ -4,7 +4,6 @@ import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
@@ -74,7 +73,7 @@ public class Issue implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -85,13 +84,9 @@ public class Issue implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         return issuer.node.waitForTransaction(issuer.node.wavesNode.issueAsset(issuer.wavesAccount,
                 issuer.node.wavesNode.getChainId(), name, description, quantity, decimals, isReissuable, script, calcFee()));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

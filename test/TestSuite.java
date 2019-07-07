@@ -1,13 +1,10 @@
 import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
-import lib.Version;
 import lib.Node;
-import com.spotify.docker.client.exceptions.DockerException;
+import lib.Version;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
@@ -23,7 +20,7 @@ class TestSuite {
     private Account alice, bob, carol;
 
     @BeforeAll
-    void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
+    void before() throws IOException {
         node = runDockerNode(Version.MAINNET);
 
         alice = new Account(node, 1_00000000L);
@@ -34,7 +31,7 @@ class TestSuite {
     }
 
     @AfterAll
-    void after() throws DockerException, InterruptedException {
+    void after() {
         node.stopDockerNode();
     }
 
@@ -42,7 +39,7 @@ class TestSuite {
     @TestMethodOrder(Alphanumeric.class)
     class Positive {
         @Test
-        void a_canDepositWaves() throws IOException, TimeoutException {
+        void a_canDepositWaves() throws IOException {
             long aliceInitBalance = alice.balance();
             long amount = 100;
 
@@ -57,7 +54,7 @@ class TestSuite {
         }
 
         @Test
-        void b_canDepositWavesTwice() throws IOException, TimeoutException {
+        void b_canDepositWavesTwice() throws IOException {
             long prevDeposit = alice.dataInt(bob.address());
             long amount = 50;
 
@@ -70,7 +67,7 @@ class TestSuite {
         }
 
         @Test
-        void c_accountsStoredSeparately() throws IOException, TimeoutException {
+        void c_accountsStoredSeparately() throws IOException {
             long bobDeposit = alice.dataInt(bob.address());
             long amount = 20;
 
@@ -84,7 +81,7 @@ class TestSuite {
         }
 
         @Test
-        void d_canWithdrawPartially() throws IOException, TimeoutException {
+        void d_canWithdrawPartially() throws IOException {
             long aliceInitBalance = alice.balance();
             long bobInitBalance = bob.balance();
             long bobDeposit = alice.dataInt(bob.address());
@@ -104,7 +101,7 @@ class TestSuite {
         }
 
         @Test
-        void e_canWithdrawAll() throws IOException, TimeoutException {
+        void e_canWithdrawAll() throws IOException {
             long aliceInitBalance = alice.balance();
             long bobInitBalance = bob.balance();
             long amount = alice.dataInt(bob.address());

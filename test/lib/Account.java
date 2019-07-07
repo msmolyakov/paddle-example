@@ -9,7 +9,6 @@ import lib.actions.exchange.Order;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 public class Account {
 
@@ -17,7 +16,7 @@ public class Account {
     private String seedText;
     public Node node;
 
-    public Account(String seedText, Node worksWith, long initWavesBalance) throws IOException, TimeoutException {
+    public Account(String seedText, Node worksWith, long initWavesBalance) throws IOException {
         this.seedText = seedText;
         this.node = worksWith;
         wavesAccount = PrivateKeyAccount.fromSeed(this.seedText, 0, node.wavesNode.getChainId());
@@ -26,15 +25,15 @@ public class Account {
             this.node.rich.transfers(initWavesBalance).to(this).successfully();
     }
 
-    public Account(String seedText, Node worksWith) throws IOException, TimeoutException {
+    public Account(String seedText, Node worksWith) throws IOException {
         this(seedText, worksWith, 0);
     }
 
-    public Account(Node worksWith, long initWavesBalance) throws IOException, TimeoutException {
+    public Account(Node worksWith, long initWavesBalance) throws IOException {
         this(UUID.randomUUID().toString(), worksWith, initWavesBalance);
     }
 
-    public Account(Node worksWith) throws IOException, TimeoutException {
+    public Account(Node worksWith) throws IOException {
         this(worksWith, 0);
     }
 
@@ -54,7 +53,7 @@ public class Account {
         return wavesAccount.getAddress();
     }
 
-    public boolean isSmart() throws IOException {
+    public boolean isSmart() {
         return node.isSmart(address());
     }
 

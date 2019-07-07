@@ -4,9 +4,9 @@ import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
-import static lib.Constants.*;
+import static lib.Constants.EXTRA_FEE;
+import static lib.Constants.MIN_FEE;
 
 public class LeaseCancel implements Action {
 
@@ -30,7 +30,7 @@ public class LeaseCancel implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -41,13 +41,9 @@ public class LeaseCancel implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.cancelLease(
                 sender.wavesAccount, sender.node.wavesNode.getChainId(), leaseId, calcFee()));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

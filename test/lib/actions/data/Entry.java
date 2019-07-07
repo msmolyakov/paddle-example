@@ -1,7 +1,10 @@
 package lib.actions.data;
 
 import com.wavesplatform.wavesj.ByteString;
-import com.wavesplatform.wavesj.DataEntry.*;
+import com.wavesplatform.wavesj.DataEntry.BinaryEntry;
+import com.wavesplatform.wavesj.DataEntry.BooleanEntry;
+import com.wavesplatform.wavesj.DataEntry.LongEntry;
+import com.wavesplatform.wavesj.DataEntry.StringEntry;
 
 public class Entry {
 

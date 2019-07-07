@@ -18,4 +18,5 @@ public interface NodeApi {
 
     @GET("debug/stateChanges/info/{id}")
     Call<StateChangesInfo> stateChanges(@Path("id") String id);
+
 }

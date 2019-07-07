@@ -1,5 +1,3 @@
-import com.spotify.docker.client.exceptions.DockerException;
-import com.wavesplatform.wavesj.Base64;
 import lib.Account;
 import lib.Node;
 import lib.Version;
@@ -10,14 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.*;
 import java.util.Arrays;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Node.runDockerNode;
 import static lib.actions.data.Entry.binary;
-import static lib.actions.data.Entry.string;
 import static lib.actions.invoke.Arg.arg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,14 +23,14 @@ class RsaVerifyTest {
     private Account alice;
 
     @BeforeEach
-    void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
+    void before() throws IOException {
         node = runDockerNode(Version.TESTNET);
 
         alice = new Account("alice", node, 100_00000000L);
     }
 
     @Test
-    void paymentIsPartOfDAppBalance() throws IOException, TimeoutException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+    void paymentIsPartOfDAppBalance() throws IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         char[] v32chars = new char[16382];
         Arrays.fill(v32chars, 'ё');
         String v32 = "b" + new String(v32chars) + "bb";
@@ -74,7 +69,7 @@ class RsaVerifyTest {
     }
 
     @AfterEach
-    void after() throws DockerException, InterruptedException {
+    void after() {
         node.stopDockerNode();
     }
 

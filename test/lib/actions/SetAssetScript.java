@@ -6,7 +6,6 @@ import lib.Account;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
@@ -35,7 +34,7 @@ public class SetAssetScript implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -47,15 +46,11 @@ public class SetAssetScript implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         String compiledScript = sender.node.wavesNode.compileScript(new String(Files.readAllBytes(Paths.get(scriptFile))));
 
         return sender.node.waitForTransaction(sender.node.wavesNode.setAssetScript(
                 sender.wavesAccount, sender.node.wavesNode.getChainId(), assetId, compiledScript, calcFee()));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

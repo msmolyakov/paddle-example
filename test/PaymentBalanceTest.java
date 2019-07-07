@@ -1,12 +1,11 @@
-import com.spotify.docker.client.exceptions.DockerException;
 import lib.Account;
 import lib.Node;
 import lib.Version;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
@@ -20,7 +19,7 @@ class PaymentBalanceTest {
     private String assetId;
 
     @BeforeEach
-    void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
+    void before() throws IOException {
         node = runDockerNode(Version.TESTNET);
 
         alice = new Account(node, 10_00000000L);
@@ -31,7 +30,7 @@ class PaymentBalanceTest {
     }
 
     @Test
-    void paymentIsPartOfDAppBalance() throws IOException, TimeoutException {
+    void paymentIsPartOfDAppBalance() throws IOException {
         assetId = alice.issues("Asset").withQuantity(1500).withDecimals(0).successfully().getId().toString();
         alice.transfers(500, assetId).to(bob).successfully();
 
@@ -47,7 +46,7 @@ class PaymentBalanceTest {
     }
 
     @AfterEach
-    void after() throws DockerException, InterruptedException {
+    void after() {
         node.stopDockerNode();
     }
 

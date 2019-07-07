@@ -3,7 +3,6 @@ package lib.actions;
 import com.wavesplatform.wavesj.Transaction;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 public interface Action {
 
@@ -11,7 +10,6 @@ public interface Action {
 
     //TODO timestamp
     //TODO feeAssetId
-    long calcFee() throws IOException;
-    Transaction successfully() throws IOException, TimeoutException;
-    void butGotError();
+    long calcFee();
+    Transaction successfully() throws IOException;
 }

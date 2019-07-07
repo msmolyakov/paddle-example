@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
@@ -54,7 +53,7 @@ public class MassTransfer implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -67,12 +66,8 @@ public class MassTransfer implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.massTransfer(sender.wavesAccount, assetId, transfers, calcFee(), attachment));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

@@ -1,29 +1,29 @@
-import com.spotify.docker.client.exceptions.DockerException;
 import lib.Account;
 import lib.Node;
 import lib.Version;
-import lib.api.exceptions.NodeError;
-import org.junit.jupiter.api.*;
+import lib.api.exceptions.ApiError;
+import lib.exceptions.NodeError;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Node.connectToNode;
 import static lib.Node.runDockerNode;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
-class NodeErrorTest {
+class ApiErrorTest {
 
     private Node node;
     private Account alice;
     private String assetId;
 
     @BeforeAll
-    void before() throws DockerException, InterruptedException, URISyntaxException, IOException, TimeoutException {
+    void before() throws IOException {
         node = runDockerNode(Version.MAINNET);
 
         alice = new Account(node, 10_00000000L);
@@ -32,29 +32,34 @@ class NodeErrorTest {
     }
 
     @AfterAll
-    void after() throws DockerException, InterruptedException {
+    void after() {
         node.stopDockerNode();
     }
 
     @Test
-    void a() throws IOException {
+    void a() {
         assertEquals("Asset", node.assetDetails(assetId).name);
     }
 
     @Test
     void b() {
-        assertThrows(NodeError.class, () ->
+        ApiError e = assertThrows(ApiError.class, () ->
                 System.out.println("result -> " + node.assetDetails("r3r3r3").name)
+        );
+        assertAll("error fields",
+                () -> assertEquals(199, e.error),
+                () -> assertEquals("Failed to find issue transaction by ID", e.message)
         );
     }
 
     @Test
-    void c() throws TimeoutException, IOException, URISyntaxException {
+    void c() {
         Node unexistedNode = connectToNode("http://localhost:9999/", 'U');
 
-        assertThrows(NodeError.class, () ->
-            unexistedNode.assetDetails(assetId)
+        NodeError e = assertThrows(NodeError.class, () ->
+                unexistedNode.assetDetails(assetId)
         );
+        assertTrue(e.getMessage().contains("Failed to connect to"));
     }
 
 }

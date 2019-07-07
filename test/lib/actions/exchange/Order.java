@@ -3,8 +3,6 @@ package lib.actions.exchange;
 import com.wavesplatform.wavesj.AssetPair;
 import lib.Account;
 
-import java.io.IOException;
-
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 import static lib.actions.exchange.OrderType.BUY;
@@ -65,7 +63,7 @@ public class Order {
         return this;
     }
 
-    public long calcMatcherFee() throws IOException {
+    public long calcMatcherFee() {
         if (matcherFee > 0)
             return matcherFee;
         else {

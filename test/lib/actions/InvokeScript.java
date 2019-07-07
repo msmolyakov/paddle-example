@@ -2,15 +2,14 @@ package lib.actions;
 
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
-import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.Payment;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.FunctionCall;
+import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.Payment;
 import lib.Account;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
@@ -79,11 +78,9 @@ public class InvokeScript implements Action {
     /**
      * Важно! Не учитывает переводы смарт ассетов через TransferSet.
      * В таком случае комиссию можно указывать самостоятельно: `invoke.withFee(invoke.calcFee() + EXTRA_FEE)`
-     * @return
-     * @throws IOException
      */
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -96,14 +93,10 @@ public class InvokeScript implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.invokeScript(
                 sender.wavesAccount, sender.node.wavesNode.getChainId(), this.dApp,
                 this.call, this.payments, calcFee(), this.feeAssetId));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
-import static lib.Constants.*;
+import static lib.Constants.EXTRA_FEE;
+import static lib.Constants.MIN_FEE;
 
 public class SetScript implements Action {
 
@@ -33,7 +33,7 @@ public class SetScript implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -44,7 +44,7 @@ public class SetScript implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(scriptFile)); //TODO Issue, SetAssetScript
         String script = String.join("\n", lines);
         String compiledScript = sender.node.wavesNode.compileScript(script);
@@ -53,8 +53,4 @@ public class SetScript implements Action {
                 sender.wavesAccount, compiledScript, sender.node.wavesNode.getChainId(), calcFee()));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

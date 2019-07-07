@@ -4,7 +4,6 @@ import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
@@ -38,7 +37,7 @@ public class Burn implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -50,13 +49,9 @@ public class Burn implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         return issuer.node.waitForTransaction(issuer.node.wavesNode.burnAsset(issuer.wavesAccount,
                 issuer.node.wavesNode.getChainId(), assetId, quantity, calcFee()));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }

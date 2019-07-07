@@ -7,7 +7,6 @@ import lib.Account;
 import lib.actions.exchange.Order;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import static lib.Constants.MIN_FEE;
 import static lib.actions.exchange.OrderType.BUY;
@@ -81,7 +80,7 @@ public class Exchange implements Action {
     }
 
     @Override
-    public long calcFee() throws IOException {
+    public long calcFee() {
         if (this.fee > 0) {
             return this.fee;
         } else {
@@ -90,7 +89,7 @@ public class Exchange implements Action {
     }
 
     @Override
-    public Transaction successfully() throws IOException, TimeoutException {
+    public Transaction successfully() throws IOException {
         long now = System.currentTimeMillis();
         long nowPlus29Days = now + 2505600000L;
 
@@ -105,8 +104,4 @@ public class Exchange implements Action {
                 buyV2, sellV2, calcAmount(), calcPrice(), calcBuyMatcherFee(), calcSellMatcherFee(), calcFee()));
     }
 
-    @Override
-    public void butGotError() {
-
-    }
 }
