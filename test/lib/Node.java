@@ -33,7 +33,7 @@ public class Node {
 
             node.rich = new Account("create genesis wallet devnet-0-d", node);
             return node;
-        } catch (URISyntaxException | IOException e) {
+        } catch (URISyntaxException e) {
             throw new NodeError(e);
         }
     }
@@ -86,7 +86,7 @@ public class Node {
             }
 
             return node;
-        } catch (URISyntaxException | IOException | DockerException | InterruptedException e) {
+        } catch (URISyntaxException | DockerException | InterruptedException e) {
             throw new NodeError(e);
         }
     }

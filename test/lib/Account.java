@@ -5,6 +5,7 @@ import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import lib.actions.*;
 import lib.actions.exchange.Order;
+import lib.exceptions.NodeError;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,24 +17,29 @@ public class Account {
     public final String seedText;
     public Node node;
 
-    public Account(String seedText, Node worksWith, long initWavesBalance) throws IOException {
+    public Account(String seedText, Node worksWith, long initWavesBalance) {
         this.seedText = seedText;
         this.node = worksWith;
         wavesAccount = PrivateKeyAccount.fromSeed(this.seedText, 0, node.wavesNode.getChainId());
 
-        if (initWavesBalance > 0)
-            this.node.rich.transfers(initWavesBalance).to(this).successfully();
+        if (initWavesBalance > 0) {
+            try {
+                this.node.rich.transfers(initWavesBalance).to(this).successfully();
+            } catch (IOException e) {
+                throw new NodeError(e);
+            }
+        }
     }
 
-    public Account(String seedText, Node worksWith) throws IOException {
+    public Account(String seedText, Node worksWith) {
         this(seedText, worksWith, 0);
     }
 
-    public Account(Node worksWith, long initWavesBalance) throws IOException {
+    public Account(Node worksWith, long initWavesBalance) {
         this(UUID.randomUUID().toString(), worksWith, initWavesBalance);
     }
 
-    public Account(Node worksWith) throws IOException {
+    public Account(Node worksWith) {
         this(worksWith, 0);
     }
 
@@ -53,35 +59,51 @@ public class Account {
         return node.isSmart(this);
     }
 
-    public long balance() throws IOException {
-        return node.wavesNode.getBalance(address());
+    public long balance() {
+        try {
+            return node.wavesNode.getBalance(address());
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
-    public long assetBalance(String assetId) throws IOException {
-        return node.wavesNode.getBalance(address(), assetId);
+    public long assetBalance(String assetId) {
+        try {
+            return node.wavesNode.getBalance(address(), assetId);
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
-    public List<DataEntry> data() throws IOException {
-        return node.wavesNode.getData(address());
+    public List<DataEntry> data() {
+        try {
+            return node.wavesNode.getData(address());
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
-    public DataEntry data(String key) throws IOException {
-        return node.wavesNode.getDataByKey(address(), key);
+    public DataEntry data(String key) {
+        try {
+            return node.wavesNode.getDataByKey(address(), key);
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
-    public String dataStr(String key) throws IOException {
+    public String dataStr(String key) {
         return (String) data(key).getValue();
     }
 
-    public long dataInt(String key) throws IOException {
+    public long dataInt(String key) {
         return (long) data(key).getValue();
     }
 
-    public boolean dataBool(String key) throws IOException {
+    public boolean dataBool(String key) {
         return (boolean) data(key).getValue();
     }
 
-    public byte[] dataBin(String key) throws IOException {
+    public byte[] dataBin(String key) {
         return ((ByteString) data(key).getValue()).getBytes();
     }
 

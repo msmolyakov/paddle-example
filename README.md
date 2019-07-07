@@ -1,8 +1,7 @@
 MVP:
 - [x] alice.exchanges()
 - [x] correctly calc all fees
-- [ ] wrap wavesJ IOExceptions in my own
-- [ ] `alice.invokes(dApp).func("").successfully()`
+- [x] wrap wavesJ IOExceptions in my own
 - [ ] `alice.invokes(tx -> {tx.dApp = ""; tx.func = "";})`
 - [ ] `alice.invokes(i -> i.dApp(dApp).func(""))`
 - [ ] `alice.sends(invoke().dApp("dApp").func(""))`

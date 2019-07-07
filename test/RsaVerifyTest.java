@@ -23,7 +23,7 @@ class RsaVerifyTest {
     private Account alice;
 
     @BeforeEach
-    void before() throws IOException {
+    void before() {
         node = runDockerNode(Version.TESTNET);
 
         alice = new Account("alice", node, 100_00000000L);
@@ -60,7 +60,7 @@ class RsaVerifyTest {
         byte[] sha3_384 = rsa.sign("SHA3-384", source);
         byte[] sha3_512 = rsa.sign("SHA3-512", source);
 
-        alice.invokes().function("rsa", arg(rsa.keys.getPublic().getEncoded()),
+        alice.invokes(alice).function("rsa", arg(rsa.keys.getPublic().getEncoded()),
                 /*arg(none), */arg(md5), arg(sha1), arg(sha224), arg(sha256), arg(sha384), arg(sha512),
                 arg(sha3_224), arg(sha3_256), arg(sha3_384), arg(sha3_512)
         ).successfully();
