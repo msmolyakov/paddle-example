@@ -1,10 +1,8 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.Transfer;
 import lib.Account;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,19 +19,19 @@ public class MassTransfer implements Action {
     public long fee;
 
     //TODO может быть без получателей?
-    public MassTransfer(String assetId) {
-        this.assetId = assetId;
+    public MassTransfer() {
         this.transfers = new LinkedList<>();
         this.attachment = "";
         this.fee = 0;
     }
 
-    public MassTransfer() {
-        this(null);
-    }
-
     public MassTransfer from(Account sender) {
         this.sender = sender;
+        return this;
+    }
+
+    public MassTransfer asset(String assetId) {
+        this.assetId = assetId;
         return this;
     }
 
@@ -42,12 +40,12 @@ public class MassTransfer implements Action {
         return this;
     }
 
-    public MassTransfer withAttachment(String message) {
+    public MassTransfer attachment(String message) {
         this.attachment = message;
         return this;
     }
 
-    public MassTransfer withFee(long fee) {
+    public MassTransfer fee(long fee) {
         this.fee = fee;
         return this;
     }
@@ -63,10 +61,6 @@ public class MassTransfer implements Action {
             totalFee += (transfers.size() + 1) / 2;
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.massTransfer(sender.wavesAccount, assetId, transfers, calcFee(), attachment));
     }
 
 }

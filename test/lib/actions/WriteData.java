@@ -1,12 +1,10 @@
 package lib.actions;
 
 import com.wavesplatform.wavesj.DataEntry;
-import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.DataTransaction;
 import lib.Account;
 import lib.actions.data.Entry;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;

@@ -151,8 +151,16 @@ public class Account {
         return new CreateAlias(alias).from(this);
     }
 
-    public MassTransfer massTransfers() {
-        return new MassTransfer().from(this);
+    public MassTransferTransaction massTransfers(Consumer<MassTransfer> massTransfer) {
+        MassTransfer m = new MassTransfer().from(this);
+        massTransfer.accept(m);
+
+        try {
+            return (MassTransferTransaction) node.waitForTransaction(node.wavesNode.massTransfer(
+                    m.sender.wavesAccount, m.assetId, m.transfers, m.calcFee(), m.attachment));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public DataTransaction writes(Consumer<WriteData> writeData) {
