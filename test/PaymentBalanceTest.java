@@ -31,7 +31,7 @@ class PaymentBalanceTest {
 
     @Test
     void paymentIsPartOfDAppBalance() throws IOException {
-        assetId = alice.issues("Asset").quantity(1500).decimals(0).successfully().getId().toString();
+        assetId = alice.issues(i -> i.quantity(1500).decimals(0)).getId().toString();
         alice.transfers(t -> t.to(bob).amount(500).asset(assetId));
 
         bob.invokes(i -> i.dApp(alice).function("some", arg(carol.address())).payment(500, assetId));

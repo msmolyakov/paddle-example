@@ -28,7 +28,7 @@ class ApiErrorTest {
 
         alice = new Account(node, 10_00000000L);
 
-        assetId = alice.issues("Asset").successfully().getId().toString();
+        assetId = alice.issues(i -> i.quantity(1000_00000000L)).getId().toString();
     }
 
     @AfterAll

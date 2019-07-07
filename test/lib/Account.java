@@ -115,8 +115,17 @@ public class Account {
         return ((ByteString) data(key).getValue()).getBytes();
     }
 
-    public Issue issues(String name) {
-        return new Issue(name).from(this);
+    public IssueTransaction issues(Consumer<Issue> issue) {
+        Issue i = new Issue().from(this);
+        issue.accept(i);
+
+        try {
+            return (IssueTransaction) node.waitForTransaction(node.wavesNode.issueAsset(i.issuer.wavesAccount,
+                    node.getChainId(), i.name, i.description, i.quantity, i.decimals,
+                    i.isReissuable,i.script, i.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public TransferTransaction transfers(Consumer<Transfer> transfer) {

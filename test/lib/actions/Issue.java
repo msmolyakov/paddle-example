@@ -1,9 +1,8 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
 
-import java.io.IOException;
+import java.util.Random;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
@@ -19,10 +18,9 @@ public class Issue implements Action {
     public String script;
     public long fee;
 
-    public Issue(String name) {
-        this.name = name;
+    public Issue() {
+        this.name = "Asset " + new Random().nextInt(10000);
         this.description = "";
-        this.quantity = 1000_00000000L;
         this.decimals = 8;
         this.isReissuable = true;
         this.script = null;
@@ -31,6 +29,11 @@ public class Issue implements Action {
 
     public Issue from(Account issuer) {
         this.issuer = issuer;
+        return this;
+    }
+
+    public Issue name(String name) {
+        this.name = name;
         return this;
     }
 
@@ -81,11 +84,6 @@ public class Issue implements Action {
             totalFee += issuer.isSmart() ? EXTRA_FEE : 0;
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return issuer.node.waitForTransaction(issuer.node.wavesNode.issueAsset(issuer.wavesAccount,
-                issuer.node.wavesNode.getChainId(), name, description, quantity, decimals, isReissuable, script, calcFee()));
     }
 
 }
