@@ -16,17 +16,22 @@ import static lib.Constants.MIN_FEE;
 
 public class WriteData implements Action {
 
-    public List<DataEntry<?>> data;
     public Account sender;
+    public List<DataEntry<?>> data;
     public long fee;
 
-    public WriteData(DataEntry<?>... data) {
-        this.data = new LinkedList<>(Arrays.asList(data));
+    public WriteData() {
+        this.data = new LinkedList<>();
         this.fee = 0;
     }
 
     public WriteData from(Account sender) {
         this.sender = sender;
+        return this;
+    }
+
+    public WriteData data(DataEntry<?>... data) {
+        this.data = new LinkedList<>(Arrays.asList(data));
         return this;
     }
 
@@ -68,10 +73,6 @@ public class WriteData implements Action {
 
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.data(sender.wavesAccount, data, calcFee()));
     }
 
 }

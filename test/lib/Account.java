@@ -4,10 +4,7 @@ import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
-import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
-import com.wavesplatform.wavesj.transactions.SetAssetScriptTransaction;
-import com.wavesplatform.wavesj.transactions.SetScriptTransaction;
-import com.wavesplatform.wavesj.transactions.SponsorTransaction;
+import com.wavesplatform.wavesj.transactions.*;
 import lib.actions.*;
 import lib.actions.exchange.Order;
 import lib.exceptions.NodeError;
@@ -158,8 +155,16 @@ public class Account {
         return new MassTransfer().from(this);
     }
 
-    public WriteData writes(DataEntry<?>... data) {
-        return new WriteData(data).from(this);
+    public DataTransaction writes(Consumer<WriteData> writeData) {
+        WriteData w = new WriteData().from(this);
+        writeData.accept(w);
+
+        try {
+            return (DataTransaction) node.waitForTransaction(node.wavesNode.data(
+                    w.sender.wavesAccount, w.data, w.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public SetScriptTransaction setsScript(Consumer<SetScript> setScript) {

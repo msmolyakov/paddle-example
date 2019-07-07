@@ -35,7 +35,7 @@ class RsaVerifyTest {
         Arrays.fill(v32chars, 'ё');
         String v32 = "b" + new String(v32chars) + "bb";
 
-        alice.writes(binary("1", v32.getBytes())).successfully();
+        alice.writes(d -> d.binary("1", v32.getBytes()));
 
         byte[] bytes = alice.dataBin("1");
         assertEquals(32767, bytes.length);
