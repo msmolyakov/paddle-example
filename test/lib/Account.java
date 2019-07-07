@@ -35,11 +35,7 @@ public class Account {
         wavesAccount = PrivateKeyAccount.fromSeed(this.seedText, 0, node.wavesNode.getChainId());
 
         if (initWavesBalance > 0) {
-            try {
-                this.node.rich.transfers(initWavesBalance).to(this).successfully();
-            } catch (IOException e) {
-                throw new NodeError(e);
-            }
+            this.node.rich.transfers(t -> t.amount(initWavesBalance).to(this));
         }
     }
 
@@ -123,12 +119,16 @@ public class Account {
         return new Issue(name).from(this);
     }
 
-    public Transfer transfers(long amount) {
-        return new Transfer(amount).from(this);
-    }
+    public TransferTransaction transfers(Consumer<Transfer> transfer) {
+        Transfer t = new Transfer().from(this);
+        transfer.accept(t);
 
-    public Transfer transfers(long amount, String assetId) {
-        return new Transfer(amount, assetId).from(this);
+        try {
+            return (TransferTransaction) node.waitForTransaction(node.wavesNode.transfer(t.sender.wavesAccount,
+                    t.recipient, t.amount, t.assetId, t.calcFee(), "WAVES", t.attachment));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public ReissueTransaction reissues(Consumer<Reissue> reissue) {

@@ -1,42 +1,47 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
-
-import java.io.IOException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;
 
 public class Transfer implements Action {
 
+    public Account sender;
+    public String recipient;
     public long amount;
     public String assetId;
-    public Account sender;
-    public Account recipient;
     public String attachment;
     public long fee;
 
-    public Transfer(long amount, String assetId) {
-        this.amount = amount;
-        this.assetId = assetId;
+    public Transfer() {
         this.attachment = "";
         this.fee = 0;
     }
 
-    public Transfer(long amount) {
-        this(amount, null);
-    }
-
     public Transfer from(Account sender) {
         this.sender = sender;
-        if (this.recipient == null) this.recipient = this.sender;
+        if (this.recipient == null) this.recipient = this.sender.address(); //TODO а стоит ли?
         return this;
     }
 
-    public Transfer to(Account recipient) {
+    public Transfer to(String recipient) {
         this.recipient = recipient;
-        if (this.sender == null) this.sender = this.recipient;
+        return this;
+    }
+
+    public Transfer to(Account account) {
+        this.recipient = account.address();
+        return this;
+    }
+
+    public Transfer amount(long amount) {
+        this.amount = amount;
+        return this;
+    }
+
+    public Transfer asset(String assetId) {
+        this.assetId = assetId;
         return this;
     }
 
@@ -60,11 +65,6 @@ public class Transfer implements Action {
             totalFee += sender.node.isSmart(assetId) ? EXTRA_FEE : 0;
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.transfer(
-                sender.wavesAccount, recipient.address(), amount, assetId, calcFee(), "WAVES", attachment));
     }
 
 }
