@@ -4,9 +4,10 @@ import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
+import com.wavesplatform.wavesj.matcher.Order;
+import com.wavesplatform.wavesj.matcher.OrderV2;
 import com.wavesplatform.wavesj.transactions.*;
 import lib.actions.*;
-import lib.actions.exchange.Order;
 import lib.exceptions.NodeError;
 
 import java.io.IOException;
@@ -19,6 +20,8 @@ import java.util.function.Supplier;
 
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.readAllLines;
+import static lib.actions.exchange.OrderType.BUY;
+import static lib.actions.exchange.OrderType.SELL;
 
 public class Account {
 
@@ -136,8 +139,27 @@ public class Account {
         return new Burn(assetId).from(this);
     }
 
-    public Exchange exchanges(Order buy, Order sell) {
-        return new Exchange(buy, sell).from(this);
+    public ExchangeTransaction exchanges(Consumer<Exchange> exchange) {
+        Exchange x = new Exchange().from(this);
+        exchange.accept(x);
+
+        long now = System.currentTimeMillis();
+        long nowPlus29Days = now + 2505600000L;
+
+        OrderV2 buyV2 = new OrderV2(x.buy.sender.wavesAccount, x.buy.matcher.wavesAccount,
+                x.buy.type == BUY ? Order.Type.BUY : Order.Type.SELL, x.buy.pair, x.buy.amount, x.buy.price,
+                now, nowPlus29Days, x.buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
+        OrderV2 sellV2 = new OrderV2(x.sell.sender.wavesAccount, x.sell.matcher.wavesAccount,
+                x.sell.type == SELL ? Order.Type.SELL : Order.Type.BUY, x.sell.pair, x.sell.amount, x.sell.price,
+                now, nowPlus29Days, x.buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
+
+        try {
+            return (ExchangeTransaction) node.waitForTransaction(node.wavesNode.exchange(x.sender.wavesAccount,
+                    buyV2, sellV2, x.calcAmount(), x.calcPrice(),
+                    x.calcBuyMatcherFee(), x.calcSellMatcherFee(), x.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public LeaseTransaction leases(Consumer<Lease> lease) {

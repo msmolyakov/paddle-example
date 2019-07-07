@@ -1,16 +1,9 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
-import com.wavesplatform.wavesj.matcher.Order.Type;
-import com.wavesplatform.wavesj.matcher.OrderV2;
 import lib.Account;
 import lib.actions.exchange.Order;
 
-import java.io.IOException;
-
 import static lib.Constants.MIN_FEE;
-import static lib.actions.exchange.OrderType.BUY;
-import static lib.actions.exchange.OrderType.SELL;
 
 public class Exchange implements Action {
 
@@ -23,9 +16,7 @@ public class Exchange implements Action {
     public long sellMatcherFee;
     public long fee;
 
-    public Exchange(Order buy, Order sell) {
-        this.buy = buy;
-        this.sell = sell;
+    public Exchange() {
         this.amount = 0;
         this.price = 0;
         this.buyMatcherFee = 0;
@@ -35,6 +26,16 @@ public class Exchange implements Action {
 
     public Exchange from(Account sender) {
         this.sender = sender;
+        return this;
+    }
+
+    public Exchange buy(Order buy) {
+        this.buy = buy;
+        return this;
+    }
+
+    public Exchange sell(Order sell) {
+        this.sell = sell;
         return this;
     }
 
@@ -86,21 +87,6 @@ public class Exchange implements Action {
         } else {
             return buy.calcMatcherFee();
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        long now = System.currentTimeMillis();
-        long nowPlus29Days = now + 2505600000L;
-
-        OrderV2 buyV2 = new OrderV2(buy.sender.wavesAccount, buy.matcher.wavesAccount,
-                buy.type == BUY ? Type.BUY : Type.SELL, buy.pair, buy.amount, buy.price, 
-                now, nowPlus29Days, buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
-        OrderV2 sellV2 = new OrderV2(sell.sender.wavesAccount, sell.matcher.wavesAccount,
-                sell.type == SELL ? Type.SELL : Type.SELL, sell.pair, sell.amount, sell.price,
-                now, nowPlus29Days, buy.calcMatcherFee(), com.wavesplatform.wavesj.matcher.Order.V2);
-
-        return sender.node.waitForTransaction(sender.node.wavesNode.exchange(sender.wavesAccount,
-                buyV2, sellV2, calcAmount(), calcPrice(), calcBuyMatcherFee(), calcSellMatcherFee(), calcFee()));
     }
 
 }
