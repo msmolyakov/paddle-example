@@ -31,7 +31,7 @@ class JacksonTest {
                 .function("some", arg("Hello!".getBytes()), arg(true), arg(1000), arg("some"))
                 .withFee(900000).successfully().getId().toString();
 
-        StateChanges changes = node.stateChanges(invokeId);
+        StateChanges changes = node.api.stateChanges(invokeId);
         assertEquals(4, changes.data.size());
     }
 

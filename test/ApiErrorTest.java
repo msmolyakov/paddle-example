@@ -38,13 +38,13 @@ class ApiErrorTest {
 
     @Test
     void a() {
-        assertEquals("Asset", node.assetDetails(assetId).name);
+        assertEquals("Asset", node.api.assetDetails(assetId).name);
     }
 
     @Test
     void b() {
         ApiError e = assertThrows(ApiError.class, () ->
-                System.out.println("result -> " + node.assetDetails("r3r3r3").name)
+                System.out.println("result -> " + node.api.assetDetails("r3r3r3").name)
         );
         assertAll("error fields",
                 () -> assertEquals(199, e.error),
@@ -57,7 +57,7 @@ class ApiErrorTest {
         Node unexistedNode = connectToNode("http://localhost:9999/", 'U');
 
         NodeError e = assertThrows(NodeError.class, () ->
-                unexistedNode.assetDetails(assetId)
+                unexistedNode.api.assetDetails(assetId)
         );
         assertTrue(e.getMessage().contains("Failed to connect to"));
     }

@@ -24,7 +24,7 @@ public class Issue implements Action {
         this.description = "";
         this.quantity = 1000_00000000L;
         this.decimals = 8;
-        this.isReissuable = false;
+        this.isReissuable = true;
         this.script = null;
         this.fee = 0;
     }

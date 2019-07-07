@@ -13,7 +13,7 @@ import java.util.UUID;
 public class Account {
 
     public PrivateKeyAccount wavesAccount;
-    private String seedText;
+    public final String seedText;
     public Node node;
 
     public Account(String seedText, Node worksWith, long initWavesBalance) throws IOException {
@@ -37,10 +37,6 @@ public class Account {
         this(worksWith, 0);
     }
 
-    public String seed() {
-        return this.seedText;
-    }
-
     public byte[] privateKey() {
         return this.wavesAccount.getPrivateKey();
     }
@@ -54,7 +50,7 @@ public class Account {
     }
 
     public boolean isSmart() {
-        return node.isSmart(address());
+        return node.isSmart(this);
     }
 
     public long balance() throws IOException {
