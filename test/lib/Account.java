@@ -131,8 +131,16 @@ public class Account {
         return new Transfer(amount, assetId).from(this);
     }
 
-    public Reissue reissues(String name) {
-        return new Reissue(name).from(this);
+    public ReissueTransaction reissues(Consumer<Reissue> reissue) {
+        Reissue r = new Reissue().from(this);
+        reissue.accept(r);
+
+        try {
+            return (ReissueTransaction) node.waitForTransaction(node.wavesNode.reissueAsset(r.issuer.wavesAccount,
+                    node.getChainId(), r.assetId, r.quantity, r.isReissuable, r.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public BurnTransaction burns(Consumer<Burn> burn) {
@@ -141,7 +149,7 @@ public class Account {
 
         try {
             return (BurnTransaction) node.waitForTransaction(node.wavesNode.burnAsset(
-                    b.issuer.wavesAccount, node.wavesNode.getChainId(), b.assetId, b.quantity, b.calcFee()));
+                    b.issuer.wavesAccount, node.getChainId(), b.assetId, b.quantity, b.calcFee()));
         } catch (IOException e) {
             throw new NodeError(e);
         }

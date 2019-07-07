@@ -1,9 +1,6 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
-
-import java.io.IOException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
@@ -16,15 +13,19 @@ public class Reissue implements Action {
     public boolean isReissuable;
     public long fee;
 
-    public Reissue(String assetId) {
-        this.assetId = assetId;
-        this.quantity = 10000_00000000L;
-        this.isReissuable = false;
+    public Reissue() {
+        this.quantity = 10000_00000000L; //TODO а надо ли?
+        this.isReissuable = true; //TODO а надо ли?
         this.fee = 0;
     }
 
     public Reissue from(Account issuer) {
         this.issuer = issuer;
+        return this;
+    }
+
+    public Reissue asset(String assetId) {
+        this.assetId = assetId;
         return this;
     }
 
@@ -61,11 +62,6 @@ public class Reissue implements Action {
             totalFee += issuer.node.isSmart(assetId) ? EXTRA_FEE : 0;
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return issuer.node.waitForTransaction(issuer.node.wavesNode.reissueAsset(issuer.wavesAccount,
-                issuer.node.wavesNode.getChainId(), assetId, quantity, isReissuable, calcFee()));
     }
 
 }
