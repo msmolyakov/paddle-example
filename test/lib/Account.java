@@ -6,6 +6,7 @@ import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
 import com.wavesplatform.wavesj.transactions.SetAssetScriptTransaction;
+import com.wavesplatform.wavesj.transactions.SponsorTransaction;
 import lib.actions.*;
 import lib.actions.exchange.Order;
 import lib.exceptions.NodeError;
@@ -163,16 +164,21 @@ public class Account {
         return new SetScript(scriptFile.endsWith(".ride") ? scriptFile : scriptFile + ".ride").from(this);
     }
 
-    public SponsorFee sponsors(String assetId) {
-        return new SponsorFee(assetId).from(this);
+    public SponsorTransaction sponsors(Consumer<SponsorFee> sponsorFee) {
+        SponsorFee s = new SponsorFee().from(this);
+        sponsorFee.accept(s);
+
+        try {
+            return (SponsorTransaction) node.waitForTransaction(node.wavesNode.sponsorAsset(
+                    s.sender.wavesAccount, s.assetId, s.minSponsoredAssetFee, s.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public SetAssetScriptTransaction setsAssetScript(Consumer<SetAssetScript> setAssetScript) {
         SetAssetScript s = new SetAssetScript().from(this);
         setAssetScript.accept(s);
-
-        if (s.sender == null) throw new NodeError("Sender not specified");
-        if (s.assetId == null || s.assetId.isEmpty()) throw new NodeError("Asset id not specified");
 
         try {
             String compiledScript = node.compileScript(new String(readAllBytes(Paths.get(s.scriptFile))));
@@ -188,11 +194,13 @@ public class Account {
     public InvokeScriptTransaction invokes(Consumer<InvokeScript> invokeScript) {
         InvokeScript i = new InvokeScript().from(this);
         invokeScript.accept(i);
+
+        String dApp = i.dApp == null || i.dApp.isEmpty() ? i.sender.address() : i.dApp;
+
         try {
             return (InvokeScriptTransaction) node.waitForTransaction(node.wavesNode.invokeScript(
                     i.sender.wavesAccount, i.sender.node.wavesNode.getChainId(),
-                    i.dApp == null || i.dApp.isEmpty() ? i.sender.address() : i.dApp,
-                    i.call, i.payments, i.calcFee(), i.feeAssetId));
+                    dApp, i.call, i.payments, i.calcFee(), i.feeAssetId));
         } catch (IOException e) {
             throw new NodeError(e);
         }

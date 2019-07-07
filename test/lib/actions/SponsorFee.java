@@ -1,9 +1,6 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
-
-import java.io.IOException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.ONE_WAVES;
@@ -16,14 +13,18 @@ public class SponsorFee implements Action {
     public long minSponsoredAssetFee;
     public long fee;
 
-    public SponsorFee(String assetId) {
-        this.assetId = assetId;
+    public SponsorFee() {
         this.minSponsoredAssetFee = 1;
         this.fee = 0;
     }
 
     public SponsorFee from(Account sender) {
         this.sender = sender;
+        return this;
+    }
+
+    public SponsorFee asset(String assetId) {
+        this.assetId = assetId;
         return this;
     }
 
@@ -46,11 +47,6 @@ public class SponsorFee implements Action {
             totalFee += sender.isSmart() ? EXTRA_FEE : 0;
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.sponsorAsset(
-                sender.wavesAccount, assetId, minSponsoredAssetFee, calcFee()));
     }
 
 }
