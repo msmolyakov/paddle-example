@@ -26,7 +26,7 @@ class PaymentBalanceTest {
         bob = new Account(node, 1_00000000L);
         carol = new Account(node);
 
-        alice.setsScript("payment-balance.ride").successfully();
+        alice.setsScript(s -> s.script("payment-balance.ride"));
     }
 
     @Test

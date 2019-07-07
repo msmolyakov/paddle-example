@@ -45,7 +45,7 @@ class RsaVerifyTest {
         baos.write(bytes);
         byte[] source = baos.toByteArray();
 
-        alice.setsScript("rsa-verify").successfully();
+        alice.setsScript(s -> s.script("rsa-verify"));
 
         RSA rsa = new RSA();
 //        byte[] none = rsa.sign("NONE", source);

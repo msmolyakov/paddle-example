@@ -23,7 +23,7 @@ class JacksonTest {
         node = runDockerNode(Version.TESTNET);
         alice = new Account("alice", node, 1000_00000000L);
 
-        alice.setsScript("jackson.ride").successfully();
+        alice.setsScript(s -> s.script("jackson.ride"));
     }
 
     @Test

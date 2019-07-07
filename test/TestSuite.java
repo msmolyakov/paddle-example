@@ -27,7 +27,7 @@ class TestSuite {
         bob = new Account(node, 1_00000000L);
         carol = new Account(node, 1_00000000L);
 
-        alice.setsScript("wallet.ride").successfully();
+        alice.setsScript(s -> s.script("wallet.ride"));
     }
 
     @AfterAll

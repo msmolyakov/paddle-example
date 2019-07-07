@@ -6,6 +6,7 @@ import com.wavesplatform.wavesj.PrivateKeyAccount;
 import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
 import com.wavesplatform.wavesj.transactions.SetAssetScriptTransaction;
+import com.wavesplatform.wavesj.transactions.SetScriptTransaction;
 import com.wavesplatform.wavesj.transactions.SponsorTransaction;
 import lib.actions.*;
 import lib.actions.exchange.Order;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static java.nio.file.Files.readAllBytes;
+import static java.nio.file.Files.readAllLines;
 
 public class Account {
 
@@ -160,8 +162,25 @@ public class Account {
         return new WriteData(data).from(this);
     }
 
-    public SetScript setsScript(String scriptFile) {
-        return new SetScript(scriptFile.endsWith(".ride") ? scriptFile : scriptFile + ".ride").from(this);
+    public SetScriptTransaction setsScript(Consumer<SetScript> setScript) {
+        SetScript s = new SetScript().from(this);
+        setScript.accept(s);
+
+        try {
+            String compiledScript;
+            if (s.scriptFile == null)
+                compiledScript = null;
+            else {
+                //TODO for Issue
+                String script = String.join("\n", readAllLines(Paths.get(s.scriptFile)));
+                compiledScript = node.compileScript(script);
+            }
+
+            return (SetScriptTransaction) node.waitForTransaction(node.wavesNode.setScript(
+                    s.sender.wavesAccount, compiledScript, node.getChainId(), s.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public SponsorTransaction sponsors(Consumer<SponsorFee> sponsorFee) {
@@ -181,14 +200,19 @@ public class Account {
         setAssetScript.accept(s);
 
         try {
-            String compiledScript = node.compileScript(new String(readAllBytes(Paths.get(s.scriptFile))));
+            String compiledScript;
+            if (s.scriptFile == null)
+                compiledScript = null;
+            else {
+                String script = String.join("\n", readAllLines(Paths.get(s.scriptFile)));
+                compiledScript = node.compileScript(script);
+            }
 
             return (SetAssetScriptTransaction) node.waitForTransaction(node.wavesNode.setAssetScript(
-                    s.sender.wavesAccount, s.sender.node.getChainId(), s.assetId, compiledScript, s.calcFee()));
+                    s.sender.wavesAccount, node.getChainId(), s.assetId, compiledScript, s.calcFee()));
         } catch (IOException e) {
             throw new NodeError(e);
         }
-
     }
 
     public InvokeScriptTransaction invokes(Consumer<InvokeScript> invokeScript) {
