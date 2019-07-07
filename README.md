@@ -2,9 +2,7 @@ MVP:
 - [x] alice.exchanges()
 - [x] correctly calc all fees
 - [x] wrap wavesJ IOExceptions in my own
-- [ ] `alice.invokes(tx -> {tx.dApp = ""; tx.func = "";})`
-- [ ] `alice.invokes(i -> i.dApp(dApp).func(""))`
-- [ ] `alice.sends(invoke().dApp("dApp").func(""))`
+- [x] `alice.invokes(i -> i.dApp(dApp).func(""))`
 - [ ] `node.send(invoke().sender(alice).dApp("dApp").func(""))`
 - [x] fix: REST API key
 - [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode
