@@ -5,8 +5,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -19,7 +17,7 @@ class PaymentBalanceTest {
     private String assetId;
 
     @BeforeEach
-    void before() throws IOException {
+    void before() {
         node = runDockerNode(Version.TESTNET);
 
         alice = new Account(node, 10_00000000L);
@@ -30,7 +28,7 @@ class PaymentBalanceTest {
     }
 
     @Test
-    void paymentIsPartOfDAppBalance() throws IOException {
+    void paymentIsPartOfDAppBalance() {
         assetId = alice.issues(i -> i.quantity(1500).decimals(0)).getId().toString();
         alice.transfers(t -> t.to(bob).amount(500).asset(assetId));
 

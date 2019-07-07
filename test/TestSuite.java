@@ -4,8 +4,6 @@ import lib.Node;
 import lib.Version;
 import org.junit.jupiter.api.*;
 
-import java.io.IOException;
-
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -20,7 +18,7 @@ class TestSuite {
     private Account alice, bob, carol;
 
     @BeforeAll
-    void before() throws IOException {
+    void before() {
         node = runDockerNode(Version.MAINNET);
 
         alice = new Account(node, 1_00000000L);

@@ -7,8 +7,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +17,7 @@ class JacksonTest {
     private Account alice;
 
     @BeforeEach
-    void before() throws IOException {
+    void before() {
         node = runDockerNode(Version.TESTNET);
         alice = new Account("alice", node, 1000_00000000L);
 

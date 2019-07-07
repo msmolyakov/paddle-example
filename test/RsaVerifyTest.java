@@ -12,7 +12,6 @@ import java.security.*;
 import java.util.Arrays;
 
 import static lib.Node.runDockerNode;
-import static lib.actions.data.Entry.binary;
 import static lib.actions.invoke.Arg.arg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

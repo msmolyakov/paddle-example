@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.io.IOException;
-
 import static lib.Node.connectToNode;
 import static lib.Node.runDockerNode;
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,7 +21,7 @@ class ApiErrorTest {
     private String assetId;
 
     @BeforeAll
-    void before() throws IOException {
+    void before() {
         node = runDockerNode(Version.MAINNET);
 
         alice = new Account(node, 10_00000000L);

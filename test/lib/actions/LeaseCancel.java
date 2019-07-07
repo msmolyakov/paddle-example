@@ -1,9 +1,6 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import lib.Account;
-
-import java.io.IOException;
 
 import static lib.Constants.EXTRA_FEE;
 import static lib.Constants.MIN_FEE;

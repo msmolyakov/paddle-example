@@ -3,7 +3,6 @@ package lib;
 import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
-import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.matcher.Order;
 import com.wavesplatform.wavesj.matcher.OrderV2;
 import com.wavesplatform.wavesj.transactions.*;
@@ -11,14 +10,11 @@ import lib.actions.*;
 import lib.exceptions.NodeError;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.readAllLines;
 import static lib.actions.exchange.OrderType.BUY;
 import static lib.actions.exchange.OrderType.SELL;
