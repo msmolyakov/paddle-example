@@ -83,7 +83,6 @@ public class Issue implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return issuer.node.waitForTransaction(issuer.node.wavesNode.issueAsset(issuer.wavesAccount,
                 issuer.node.wavesNode.getChainId(), name, description, quantity, decimals, isReissuable, script, calcFee()));

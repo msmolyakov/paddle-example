@@ -38,12 +38,13 @@ class TestSuite {
     @Nested
     @TestMethodOrder(Alphanumeric.class)
     class Positive {
+
         @Test
-        void a_canDepositWaves() throws IOException {
+        void a_canDepositWaves() {
             long aliceInitBalance = alice.balance();
             long amount = 100;
 
-            bob.invokes(alice).function("deposit").withWavesPayment(amount).successfully();
+            bob.invokes(i -> i.dApp(alice).function("deposit").withWavesPayment(amount));
 
             assertAll("data and balances",
                     () -> assertEquals(1, alice.data().size()),
@@ -54,11 +55,11 @@ class TestSuite {
         }
 
         @Test
-        void b_canDepositWavesTwice() throws IOException {
+        void b_canDepositWavesTwice() {
             long prevDeposit = alice.dataInt(bob.address());
             long amount = 50;
 
-            bob.invokes(alice).function("deposit").withWavesPayment(amount).successfully();
+            bob.invokes(i -> i.dApp(alice).function("deposit").withWavesPayment(amount));
 
             assertAll("data",
                     () -> assertEquals(1, alice.data().size()),
@@ -67,11 +68,11 @@ class TestSuite {
         }
 
         @Test
-        void c_accountsStoredSeparately() throws IOException {
+        void c_accountsStoredSeparately() {
             long bobDeposit = alice.dataInt(bob.address());
             long amount = 20;
 
-            carol.invokes(alice).function("deposit").withWavesPayment(amount).successfully();
+            carol.invokes(i -> i.dApp(alice).function("deposit").withWavesPayment(amount));
 
             assertAll("data",
                     () -> assertEquals(2, alice.data().size()),
@@ -81,14 +82,14 @@ class TestSuite {
         }
 
         @Test
-        void d_canWithdrawPartially() throws IOException {
+        void d_canWithdrawPartially() {
             long aliceInitBalance = alice.balance();
             long bobInitBalance = bob.balance();
             long bobDeposit = alice.dataInt(bob.address());
             long carolDeposit = alice.dataInt(carol.address());
             long amount = 1;
 
-            Transaction invoke = bob.invokes(alice).function("withdraw", arg(amount)).successfully();
+            Transaction invoke = bob.invokes(i -> i.dApp(alice).function("withdraw", arg(amount)));
 
             assertAll("data and balances",
                     () -> assertEquals(2, alice.data().size()),
@@ -101,12 +102,12 @@ class TestSuite {
         }
 
         @Test
-        void e_canWithdrawAll() throws IOException {
+        void e_canWithdrawAll() {
             long aliceInitBalance = alice.balance();
             long bobInitBalance = bob.balance();
             long amount = alice.dataInt(bob.address());
 
-            Transaction invoke = bob.invokes(alice).function("withdraw", arg(amount)).successfully();
+            Transaction invoke = bob.invokes(i -> i.dApp(alice).function("withdraw", arg(amount)));
 
             assertAll("data and balances",
                     () -> assertEquals(2, alice.data().size()),
@@ -116,6 +117,7 @@ class TestSuite {
                     () -> assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance())
             );
         }
+
     }
 
 }

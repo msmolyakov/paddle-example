@@ -48,7 +48,6 @@ public class Lease implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.lease(
                 sender.wavesAccount, recipient.address(), amount, calcFee()));

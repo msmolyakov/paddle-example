@@ -40,7 +40,6 @@ public class CreateAlias implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.alias(
                 sender.wavesAccount, sender.node.wavesNode.getChainId(), alias, calcFee()));

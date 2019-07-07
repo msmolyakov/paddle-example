@@ -63,7 +63,6 @@ public class Reissue implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return issuer.node.waitForTransaction(issuer.node.wavesNode.reissueAsset(issuer.wavesAccount,
                 issuer.node.wavesNode.getChainId(), assetId, quantity, isReissuable, calcFee()));

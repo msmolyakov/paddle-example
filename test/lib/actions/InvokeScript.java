@@ -1,12 +1,10 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.FunctionCall;
 import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction.Payment;
 import lib.Account;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +22,7 @@ public class InvokeScript implements Action {
     public String feeAssetId;
 
     public InvokeScript(String addressOrAlias) {
-        this.dApp = addressOrAlias.isEmpty() ? null : addressOrAlias;
+        this.dApp = addressOrAlias;
         this.call = null;
         this.payments = new ArrayList<>();
         this.fee = 0;
@@ -42,6 +40,16 @@ public class InvokeScript implements Action {
     public InvokeScript from(Account sender) {
         this.sender = sender;
         if (this.dApp == null) this.dApp = this.sender.address();
+        return this;
+    }
+
+    public InvokeScript dApp(String addressOrAlias) {
+        this.dApp = addressOrAlias;
+        return this;
+    }
+
+    public InvokeScript dApp(Account account) {
+        this.dApp = account.address();
         return this;
     }
 
@@ -90,13 +98,6 @@ public class InvokeScript implements Action {
                 totalFee += sender.node.isSmart(pmt.getAssetId()) ? EXTRA_FEE : 0;
             return totalFee;
         }
-    }
-
-    @Override
-    public Transaction successfully() throws IOException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.invokeScript(
-                sender.wavesAccount, sender.node.wavesNode.getChainId(), this.dApp,
-                this.call, this.payments, calcFee(), this.feeAssetId));
     }
 
 }

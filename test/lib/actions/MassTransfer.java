@@ -65,7 +65,6 @@ public class MassTransfer implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.massTransfer(sender.wavesAccount, assetId, transfers, calcFee(), attachment));
     }

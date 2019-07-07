@@ -34,7 +34,7 @@ class PaymentBalanceTest {
         assetId = alice.issues("Asset").withQuantity(1500).withDecimals(0).successfully().getId().toString();
         alice.transfers(500, assetId).to(bob).successfully();
 
-        bob.invokes(alice).function("some", arg(carol.address())).withPayment(500, assetId).successfully();
+        bob.invokes(i -> i.dApp(alice).function("some", arg(carol.address())).withPayment(500, assetId));
 
         assertAll("data and balances",
                 () -> assertEquals(1000, alice.dataInt("own")),

@@ -3,6 +3,8 @@ package lib;
 import com.wavesplatform.wavesj.ByteString;
 import com.wavesplatform.wavesj.DataEntry;
 import com.wavesplatform.wavesj.PrivateKeyAccount;
+import com.wavesplatform.wavesj.Transaction;
+import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
 import lib.actions.*;
 import lib.actions.exchange.Order;
 import lib.exceptions.NodeError;
@@ -10,6 +12,7 @@ import lib.exceptions.NodeError;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class Account {
 
@@ -163,15 +166,16 @@ public class Account {
         return new SetAssetScript(scriptFile.endsWith(".ride") ? scriptFile : scriptFile + ".ride", assetId).from(this);
     }
 
-    public InvokeScript invokes(String addressOrAlias) {
-        return new InvokeScript(addressOrAlias).from(this);
-    }
-
-    public InvokeScript invokes(Account dApp) {
-        return new InvokeScript(dApp.address()).from(this);
-    }
-
-    public InvokeScript invokes() {
-        return new InvokeScript().from(this);
+    public InvokeScriptTransaction invokes(Consumer<InvokeScript> invokeScript) {
+        InvokeScript i = new InvokeScript().from(this);
+        invokeScript.accept(i);
+        try {
+            return (InvokeScriptTransaction) node.waitForTransaction(node.wavesNode.invokeScript(
+                    i.sender.wavesAccount, i.sender.node.wavesNode.getChainId(),
+                    i.dApp == null || i.dApp.isEmpty() ? i.sender.address() : i.dApp,
+                    i.call, i.payments, i.calcFee(), i.feeAssetId));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 }

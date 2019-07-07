@@ -1,3 +1,4 @@
+import com.wavesplatform.wavesj.transactions.InvokeScriptTransaction;
 import lib.Account;
 import lib.Node;
 import lib.Version;
@@ -26,12 +27,12 @@ class JacksonTest {
     }
 
     @Test
-    void test() throws IOException {
-        String invokeId = alice.invokes(alice)
-                .function("some", arg("Hello!".getBytes()), arg(true), arg(1000), arg("some"))
-                .withFee(900000).successfully().getId().toString();
+    void test() {
+        InvokeScriptTransaction tx = alice.invokes(i ->
+                i.function("some", arg("Hello!".getBytes()), arg(true), arg(1000), arg("some"))
+                .withFee(900000));
 
-        StateChanges changes = node.api.stateChanges(invokeId);
+        StateChanges changes = node.api.stateChanges(tx.getId().toString());
         assertEquals(4, changes.data.size());
     }
 

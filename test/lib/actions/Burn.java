@@ -48,7 +48,6 @@ public class Burn implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return issuer.node.waitForTransaction(issuer.node.wavesNode.burnAsset(issuer.wavesAccount,
                 issuer.node.wavesNode.getChainId(), assetId, quantity, calcFee()));

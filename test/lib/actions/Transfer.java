@@ -62,7 +62,6 @@ public class Transfer implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.transfer(
                 sender.wavesAccount, recipient.address(), amount, assetId, calcFee(), "WAVES", attachment));

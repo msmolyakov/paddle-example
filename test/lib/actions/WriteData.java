@@ -70,7 +70,6 @@ public class WriteData implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.data(sender.wavesAccount, data, calcFee()));
     }

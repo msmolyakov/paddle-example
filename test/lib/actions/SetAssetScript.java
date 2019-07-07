@@ -45,7 +45,6 @@ public class SetAssetScript implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         String compiledScript = sender.node.wavesNode.compileScript(new String(Files.readAllBytes(Paths.get(scriptFile))));
 

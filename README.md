@@ -17,6 +17,7 @@ Release:
 - [ ] centralized error handling
 - [ ] api `account.scriptInfo()`
 - [ ] api `account.transactions(limit, after)` and `node.transactions(account, limit, after)`
+- [ ] `.withProofs(...)` and don't sign if `[0]` is specified
 
 IDEAS:
 * assert cause of UTX error from node log

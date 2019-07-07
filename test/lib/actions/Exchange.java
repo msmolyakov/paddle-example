@@ -88,7 +88,6 @@ public class Exchange implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         long now = System.currentTimeMillis();
         long nowPlus29Days = now + 2505600000L;

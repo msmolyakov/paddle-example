@@ -43,7 +43,6 @@ public class SetScript implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(scriptFile)); //TODO Issue, SetAssetScript
         String script = String.join("\n", lines);

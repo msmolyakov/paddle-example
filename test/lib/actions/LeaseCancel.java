@@ -40,7 +40,6 @@ public class LeaseCancel implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.cancelLease(
                 sender.wavesAccount, sender.node.wavesNode.getChainId(), leaseId, calcFee()));

@@ -48,7 +48,6 @@ public class SponsorFee implements Action {
         }
     }
 
-    @Override
     public Transaction successfully() throws IOException {
         return sender.node.waitForTransaction(sender.node.wavesNode.sponsorAsset(
                 sender.wavesAccount, assetId, minSponsoredAssetFee, calcFee()));
