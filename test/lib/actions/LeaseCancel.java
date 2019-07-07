@@ -14,13 +14,17 @@ public class LeaseCancel implements Action {
     public Account sender;
     public long fee;
 
-    public LeaseCancel(String leaseId) {
-        this.leaseId = leaseId;
+    public LeaseCancel() {
         this.fee = 0;
     }
 
     public LeaseCancel from(Account sender) {
         this.sender = sender;
+        return this;
+    }
+
+    public LeaseCancel leaseId(String leaseId) {
+        this.leaseId = leaseId;
         return this;
     }
 
@@ -38,11 +42,6 @@ public class LeaseCancel implements Action {
             totalFee += sender.isSmart() ? EXTRA_FEE : 0;
             return totalFee;
         }
-    }
-
-    public Transaction successfully() throws IOException {
-        return sender.node.waitForTransaction(sender.node.wavesNode.cancelLease(
-                sender.wavesAccount, sender.node.wavesNode.getChainId(), leaseId, calcFee()));
     }
 
 }

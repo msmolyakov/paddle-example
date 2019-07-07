@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.readAllLines;
@@ -139,16 +140,40 @@ public class Account {
         return new Exchange(buy, sell).from(this);
     }
 
-    public Lease leases(long amount) {
-        return new Lease(amount).from(this);
+    public LeaseTransaction leases(Consumer<Lease> lease) {
+        Lease l = new Lease().from(this);
+        lease.accept(l);
+
+        try {
+            return (LeaseTransaction) node.waitForTransaction(node.wavesNode.lease(
+                    l.sender.wavesAccount, l.recipient, l.amount, l.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
-    public LeaseCancel cancelsLease(String leaseId) {
-        return new LeaseCancel(leaseId).from(this);
+    public LeaseCancelTransaction cancelsLease(Consumer<LeaseCancel> leaseCancel) {
+        LeaseCancel l = new LeaseCancel().from(this);
+        leaseCancel.accept(l);
+
+        try {
+            return (LeaseCancelTransaction) node.waitForTransaction(node.wavesNode.cancelLease(
+                    l.sender.wavesAccount, node.wavesNode.getChainId(), l.leaseId, l.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
-    public CreateAlias createsAlias(String alias) {
-        return new CreateAlias(alias).from(this);
+    public AliasTransaction createsAlias(Consumer<CreateAlias> createAlias) {
+        CreateAlias a = new CreateAlias().from(this);
+        createAlias.accept(a);
+
+        try {
+            return (AliasTransaction) node.waitForTransaction(node.wavesNode.alias(
+                    a.sender.wavesAccount, node.wavesNode.getChainId(), a.alias, a.calcFee()));
+        } catch (IOException e) {
+            throw new NodeError(e);
+        }
     }
 
     public MassTransferTransaction massTransfers(Consumer<MassTransfer> massTransfer) {
