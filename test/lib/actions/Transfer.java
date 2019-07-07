@@ -40,12 +40,12 @@ public class Transfer implements Action {
         return this;
     }
 
-    public Transfer withAttachment(String message) {
+    public Transfer attachment(String message) {
         this.attachment = message;
         return this;
     }
 
-    public Transfer withFee(long fee) {
+    public Transfer fee(long fee) {
         this.fee = fee;
         return this;
     }

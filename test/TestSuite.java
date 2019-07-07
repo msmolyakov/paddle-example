@@ -44,7 +44,7 @@ class TestSuite {
             long aliceInitBalance = alice.balance();
             long amount = 100;
 
-            bob.invokes(i -> i.dApp(alice).function("deposit").withWavesPayment(amount));
+            bob.invokes(i -> i.dApp(alice).function("deposit").wavesPayment(amount));
 
             assertAll("data and balances",
                     () -> assertEquals(1, alice.data().size()),
@@ -59,7 +59,7 @@ class TestSuite {
             long prevDeposit = alice.dataInt(bob.address());
             long amount = 50;
 
-            bob.invokes(i -> i.dApp(alice).function("deposit").withWavesPayment(amount));
+            bob.invokes(i -> i.dApp(alice).function("deposit").wavesPayment(amount));
 
             assertAll("data",
                     () -> assertEquals(1, alice.data().size()),
@@ -72,7 +72,7 @@ class TestSuite {
             long bobDeposit = alice.dataInt(bob.address());
             long amount = 20;
 
-            carol.invokes(i -> i.dApp(alice).function("deposit").withWavesPayment(amount));
+            carol.invokes(i -> i.dApp(alice).function("deposit").wavesPayment(amount));
 
             assertAll("data",
                     () -> assertEquals(2, alice.data().size()),

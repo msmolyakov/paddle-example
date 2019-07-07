@@ -24,7 +24,7 @@ public class LeaseCancel implements Action {
         return this;
     }
 
-    public LeaseCancel withFee(long fee) {
+    public LeaseCancel fee(long fee) {
         this.fee = fee;
         return this;
     }

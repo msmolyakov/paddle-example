@@ -46,7 +46,7 @@ public class Reissue implements Action {
         return reissuable(false);
     }
 
-    public Reissue withFee(long fee) {
+    public Reissue fee(long fee) {
         this.fee = fee;
         return this;
     }

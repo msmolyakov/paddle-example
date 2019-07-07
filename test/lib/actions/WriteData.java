@@ -53,7 +53,7 @@ public class WriteData implements Action {
         return this;
     }
 
-    public WriteData withFee(long fee) {
+    public WriteData fee(long fee) {
         this.fee = fee;
         return this;
     }

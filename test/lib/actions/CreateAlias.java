@@ -24,7 +24,7 @@ public class CreateAlias implements Action {
         return this;
     }
 
-    public CreateAlias withFee(long fee) {
+    public CreateAlias fee(long fee) {
         this.fee = fee;
         return this;
     }

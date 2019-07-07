@@ -31,7 +31,7 @@ public class Burn implements Action {
         return this;
     }
 
-    public Burn withFee(long fee) {
+    public Burn fee(long fee) {
         this.fee = fee;
         return this;
     }

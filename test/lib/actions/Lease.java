@@ -32,7 +32,7 @@ public class Lease implements Action {
         return this;
     }
 
-    public Lease withFee(long fee) {
+    public Lease fee(long fee) {
         this.fee = fee;
         return this;
     }

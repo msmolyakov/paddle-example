@@ -69,23 +69,23 @@ public class InvokeScript implements Action {
         return this;
     }
 
-    public InvokeScript withPayment(long amount, String assetId) {
+    public InvokeScript payment(long amount, String assetId) {
         this.payments.add(new Payment(amount, assetId));
         return this;
     }
 
-    public InvokeScript withWavesPayment(long amount) {
-        return withPayment(amount, null);
+    public InvokeScript wavesPayment(long amount) {
+        return payment(amount, null);
     }
 
-    public InvokeScript withFee(long fee) {
+    public InvokeScript fee(long fee) {
         this.fee = fee;
         return this;
     }
 
     /**
      * Важно! Не учитывает переводы смарт ассетов через TransferSet.
-     * В таком случае комиссию можно указывать самостоятельно: `invoke.withFee(invoke.calcFee() + EXTRA_FEE)`
+     * В таком случае комиссию можно указывать самостоятельно: `invoke.fee(invoke.calcFee() + EXTRA_FEE)`
      */
     @Override
     public long calcFee() {

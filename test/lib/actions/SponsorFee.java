@@ -33,7 +33,7 @@ public class SponsorFee implements Action {
         return this;
     }
 
-    public SponsorFee withFee(long fee) {
+    public SponsorFee fee(long fee) {
         this.fee = fee;
         return this;
     }

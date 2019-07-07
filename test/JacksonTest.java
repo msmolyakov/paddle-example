@@ -30,7 +30,7 @@ class JacksonTest {
     void test() {
         InvokeScriptTransaction tx = alice.invokes(i ->
                 i.function("some", arg("Hello!".getBytes()), arg(true), arg(1000), arg("some"))
-                .withFee(900000));
+                .fee(900000));
 
         StateChanges changes = node.api.stateChanges(tx.getId().toString());
         assertEquals(4, changes.data.size());

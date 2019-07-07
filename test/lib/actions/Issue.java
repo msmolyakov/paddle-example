@@ -34,17 +34,17 @@ public class Issue implements Action {
         return this;
     }
 
-    public Issue withDescription(String description) {
+    public Issue description(String description) {
         this.description = description;
         return this;
     }
 
-    public Issue withQuantity(long quantity) {
+    public Issue quantity(long quantity) {
         this.quantity = quantity;
         return this;
     }
 
-    public Issue withDecimals(int value) {
+    public Issue decimals(int value) {
         this.decimals = (byte) value;
         return this;
     }
@@ -62,12 +62,12 @@ public class Issue implements Action {
         return reissuable(false);
     }
 
-    public Issue withScript(String compiledBase64) {
+    public Issue script(String compiledBase64) {
         this.script = compiledBase64;
         return this;
     }
 
-    public Issue withFee(long fee) {
+    public Issue fee(long fee) {
         this.fee = fee;
         return this;
     }

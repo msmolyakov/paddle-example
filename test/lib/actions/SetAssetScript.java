@@ -32,7 +32,7 @@ public class SetAssetScript implements Action {
         return this;
     }
 
-    public SetAssetScript withFee(long fee) {
+    public SetAssetScript fee(long fee) {
         this.fee = fee;
         return this;
     }

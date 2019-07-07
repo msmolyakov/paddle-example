@@ -26,7 +26,7 @@ public class SetScript implements Action {
         return this;
     }
 
-    public SetScript withFee(long fee) {
+    public SetScript fee(long fee) {
         this.fee = fee;
         return this;
     }

@@ -58,7 +58,7 @@ public class Exchange implements Action {
         return this;
     }
 
-    public Exchange withFee(long fee) {
+    public Exchange fee(long fee) {
         this.fee = fee;
         return this;
     }
