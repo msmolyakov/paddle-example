@@ -1,18 +1,20 @@
 import com.wavesplatform.wavesj.Transaction;
-import lib.Account;
-import lib.Node;
-import lib.Version;
+import im.mak.paddle.Account;
+import im.mak.paddle.Node;
+import im.mak.paddle.Version;
 import org.junit.jupiter.api.*;
 
-import static lib.Node.runDockerNode;
-import static lib.actions.invoke.Arg.arg;
+import java.nio.file.Paths;
+
+import static im.mak.paddle.Node.runDockerNode;
+import static im.mak.paddle.actions.invoke.Arg.arg;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 
 @TestMethodOrder(Alphanumeric.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TestSuite {
+class WalletTest {
 
     private Node node;
     private Account alice, bob, carol;
@@ -25,7 +27,7 @@ class TestSuite {
         bob = new Account(node, 1_00000000L);
         carol = new Account(node, 1_00000000L);
 
-        alice.setsScript(s -> s.script("wallet.ride"));
+        alice.setsScript(s -> s.script(Paths.get("wallet.ride")));
     }
 
     @AfterAll
