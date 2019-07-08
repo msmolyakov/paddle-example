@@ -11,13 +11,13 @@ public class CreateAlias implements Action {
     public String alias;
     public long fee;
 
-    public CreateAlias() {
+    public CreateAlias(Account from) {
+        this.sender = from;
         this.fee = 0;
     }
 
-    public CreateAlias from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static CreateAlias createAlias(Account sender) {
+        return new CreateAlias(sender);
     }
 
     public CreateAlias alias(String alias) {

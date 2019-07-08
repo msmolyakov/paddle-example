@@ -4,12 +4,20 @@ import lib.Account;
 
 public class Transfer {
 
-    public static com.wavesplatform.wavesj.Transfer to(long amount, Account recipient) {
-        return new com.wavesplatform.wavesj.Transfer(recipient.address(), amount);
+    public String recipient;
+    public long amount;
+
+    private Transfer(String recipient, long amount) {
+        this.recipient = recipient;
+        this.amount = amount;
     }
 
-    public static com.wavesplatform.wavesj.Transfer to(long amount, String recipient) {
-        return new com.wavesplatform.wavesj.Transfer(recipient, amount);
+    public static Transfer to(String recipient, long amount) {
+        return new Transfer(recipient, amount);
+    }
+
+    public static Transfer to(Account recipient, long amount) {
+        return to(recipient.address(), amount);
     }
 
 }

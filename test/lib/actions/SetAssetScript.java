@@ -12,13 +12,13 @@ public class SetAssetScript implements Action {
     public String scriptFile;
     public long fee;
 
-    public SetAssetScript() {
+    public SetAssetScript(Account from) {
+        this.sender = from;
         this.fee = 0;
     }
 
-    public SetAssetScript from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static SetAssetScript setAssetScript(Account from) {
+        return new SetAssetScript(from);
     }
 
     public SetAssetScript asset(String assetId) {

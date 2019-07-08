@@ -3,7 +3,7 @@ MVP:
 - [x] correctly calc all fees
 - [x] wrap wavesJ IOExceptions in my own
 - [x] `alice.invokes(i -> i.dApp(dApp).func(""))`
-- [ ] `node.send(invoke().sender(alice).dApp("dApp").func(""))`
+- [ ] `node.send(invokeScript(alice).dApp("dApp").func(""))`
 - [x] fix: REST API key
 - [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode
 - [x] AssertJ

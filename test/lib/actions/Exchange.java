@@ -16,7 +16,9 @@ public class Exchange implements Action {
     public long sellMatcherFee;
     public long fee;
 
-    public Exchange() {
+    public Exchange(Account from) {
+        this.sender = from;
+
         this.amount = 0;
         this.price = 0;
         this.buyMatcherFee = 0;
@@ -24,9 +26,8 @@ public class Exchange implements Action {
         this.fee = 0;
     }
 
-    public Exchange from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static Exchange exchange(Account from) {
+        return new Exchange(from);
     }
 
     public Exchange buy(Order buy) {

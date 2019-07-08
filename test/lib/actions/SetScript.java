@@ -11,13 +11,13 @@ public class SetScript implements Action {
     public String scriptFile;
     public long fee;
 
-    public SetScript() {
+    public SetScript(Account from) {
+        this.sender = from;
         this.fee = 0;
     }
 
-    public SetScript from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static SetScript setScript(Account from) {
+        return new SetScript(from);
     }
 
     public SetScript script(String scriptFile) {

@@ -12,14 +12,15 @@ public class Burn implements Action {
     public long quantity;
     public long fee;
 
-    public Burn() {
+    public Burn(Account from) {
+        this.issuer = from;
+
         this.quantity = 0;
         this.fee = 0;
     }
 
-    public Burn from(Account issuer) {
-        this.issuer = issuer;
-        return this;
+    public static Burn burn(Account from) {
+        return new Burn(from);
     }
 
     public Burn asset(String assetId) {

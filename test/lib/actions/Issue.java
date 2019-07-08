@@ -18,7 +18,9 @@ public class Issue implements Action {
     public String script;
     public long fee;
 
-    public Issue() {
+    public Issue(Account from) {
+        this.issuer = from;
+
         this.name = "Asset " + new Random().nextInt(10000);
         this.description = "";
         this.decimals = 8;
@@ -27,9 +29,8 @@ public class Issue implements Action {
         this.fee = 0;
     }
 
-    public Issue from(Account issuer) {
-        this.issuer = issuer;
-        return this;
+    public static Issue issue(Account from) {
+        return new Issue(from);
     }
 
     public Issue name(String name) {

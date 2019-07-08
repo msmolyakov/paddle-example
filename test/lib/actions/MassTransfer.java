@@ -1,6 +1,6 @@
 package lib.actions;
 
-import com.wavesplatform.wavesj.Transfer;
+import lib.actions.mass.Transfer;
 import lib.Account;
 
 import java.util.Arrays;
@@ -18,16 +18,16 @@ public class MassTransfer implements Action {
     public String attachment;
     public long fee;
 
-    //TODO может быть без получателей?
-    public MassTransfer() {
+    public MassTransfer(Account from) {
+        this.sender = from;
+
         this.transfers = new LinkedList<>();
         this.attachment = "";
         this.fee = 0;
     }
 
-    public MassTransfer from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static MassTransfer massTransfer(Account from) {
+        return new MassTransfer(from);
     }
 
     public MassTransfer asset(String assetId) {
@@ -36,7 +36,7 @@ public class MassTransfer implements Action {
     }
 
     public MassTransfer recipients(Transfer... transfers) {
-        this.transfers.addAll(Arrays.asList(transfers));
+        this.transfers = new LinkedList<>(Arrays.asList(transfers));
         return this;
     }
 

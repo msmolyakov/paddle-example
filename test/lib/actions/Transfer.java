@@ -14,15 +14,16 @@ public class Transfer implements Action {
     public String attachment;
     public long fee;
 
-    public Transfer() {
+    public Transfer(Account from) {
+        this.sender = from;
+        this.recipient = this.sender.address();
+
         this.attachment = "";
         this.fee = 0;
     }
 
-    public Transfer from(Account sender) {
-        this.sender = sender;
-        if (this.recipient == null) this.recipient = this.sender.address(); //TODO а стоит ли?
-        return this;
+    public static Transfer transfer(Account from) {
+        return new Transfer(from);
     }
 
     public Transfer to(String recipient) {
@@ -31,8 +32,7 @@ public class Transfer implements Action {
     }
 
     public Transfer to(Account account) {
-        this.recipient = account.address();
-        return this;
+        return to(account.address());
     }
 
     public Transfer amount(long amount) {

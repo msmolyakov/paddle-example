@@ -8,6 +8,8 @@ import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
 import com.wavesplatform.wavesj.Transaction;
+import com.wavesplatform.wavesj.transactions.IssueTransaction;
+import lib.actions.Action;
 import lib.api.Api;
 import lib.exceptions.NodeError;
 

@@ -18,19 +18,17 @@ public class Order {
     public long price = 0;
     public long matcherFee = 0;
 
-    public static Order buy() {
-        Order buy = new Order().type(BUY);
-        return buy;
+    public static Order buy(Account from) {
+        return new Order(from).type(BUY);
     }
 
-    public static Order sell() {
-        Order sell = new Order().type(SELL);
-        return sell;
+    public static Order sell(Account from) {
+        return new Order(from).type(SELL);
     }
 
-    public Order from(Account sender) {
-        this.sender = sender;
-        return this;
+    public Order(Account from) {
+        this.sender = from;
+        this.matcher = this.sender;
     }
 
     public Order matcher(Account matcher) {

@@ -12,13 +12,13 @@ public class Lease implements Action {
     public long amount;
     public long fee;
 
-    public Lease() {
+    public Lease(Account from) {
+        this.sender = from;
         this.fee = 0;
     }
 
-    public Lease from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static Lease lease(Account from) {
+        return new Lease(from);
     }
 
     public Lease to(String recipient) {
@@ -27,8 +27,7 @@ public class Lease implements Action {
     }
 
     public Lease to(Account account) {
-        this.recipient = account.address();
-        return this;
+        return to(account.address());
     }
 
     public Lease amount(long amount) {

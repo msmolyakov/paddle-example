@@ -11,6 +11,7 @@ import lib.exceptions.NodeError;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -112,7 +113,7 @@ public class Account {
     }
 
     public IssueTransaction issues(Consumer<Issue> i) {
-        Issue is = new Issue().from(this);
+        Issue is = new Issue(this);
         i.accept(is);
 
         try {
@@ -125,7 +126,7 @@ public class Account {
     }
 
     public TransferTransaction transfers(Consumer<Transfer> t) {
-        Transfer tr = new Transfer().from(this);
+        Transfer tr = new Transfer(this);
         t.accept(tr);
 
         try {
@@ -137,7 +138,7 @@ public class Account {
     }
 
     public ReissueTransaction reissues(Consumer<Reissue> r) {
-        Reissue ri = new Reissue().from(this);
+        Reissue ri = new Reissue(this);
         r.accept(ri);
 
         try {
@@ -149,7 +150,7 @@ public class Account {
     }
 
     public BurnTransaction burns(Consumer<Burn> b) {
-        Burn bu = new Burn().from(this);
+        Burn bu = new Burn(this);
         b.accept(bu);
 
         try {
@@ -161,7 +162,7 @@ public class Account {
     }
 
     public ExchangeTransaction exchanges(Consumer<Exchange> e) {
-        Exchange ex = new Exchange().from(this);
+        Exchange ex = new Exchange(this);
         e.accept(ex);
 
         long now = System.currentTimeMillis();
@@ -184,7 +185,7 @@ public class Account {
     }
 
     public LeaseTransaction leases(Consumer<Lease> lease) {
-        Lease l = new Lease().from(this);
+        Lease l = new Lease(this);
         lease.accept(l);
 
         try {
@@ -196,7 +197,7 @@ public class Account {
     }
 
     public LeaseCancelTransaction cancelsLease(Consumer<LeaseCancel> l) {
-        LeaseCancel lc = new LeaseCancel().from(this);
+        LeaseCancel lc = new LeaseCancel(this);
         l.accept(lc);
 
         try {
@@ -208,7 +209,7 @@ public class Account {
     }
 
     public AliasTransaction createsAlias(Consumer<CreateAlias> a) {
-        CreateAlias ca = new CreateAlias().from(this);
+        CreateAlias ca = new CreateAlias(this);
         a.accept(ca);
 
         try {
@@ -220,19 +221,21 @@ public class Account {
     }
 
     public MassTransferTransaction massTransfers(Consumer<MassTransfer> m) {
-        MassTransfer mt = new MassTransfer().from(this);
+        MassTransfer mt = new MassTransfer(this);
         m.accept(mt);
 
         try {
+            List<com.wavesplatform.wavesj.Transfer> transfers = new LinkedList<>();
+            mt.transfers.forEach(t -> transfers.add(new com.wavesplatform.wavesj.Transfer(t.recipient, t.amount)));
             return (MassTransferTransaction) node.waitForTransaction(node.wavesNode.massTransfer(
-                    mt.sender.wavesAccount, mt.assetId, mt.transfers, mt.calcFee(), mt.attachment));
+                    mt.sender.wavesAccount, mt.assetId, transfers, mt.calcFee(), mt.attachment));
         } catch (IOException e) {
             throw new NodeError(e);
         }
     }
 
     public DataTransaction writes(Consumer<WriteData> d) {
-        WriteData wd = new WriteData().from(this);
+        WriteData wd = new WriteData(this);
         d.accept(wd);
 
         try {
@@ -244,7 +247,7 @@ public class Account {
     }
 
     public SetScriptTransaction setsScript(Consumer<SetScript> s) {
-        SetScript ss = new SetScript().from(this);
+        SetScript ss = new SetScript(this);
         s.accept(ss);
 
         try {
@@ -265,7 +268,7 @@ public class Account {
     }
 
     public SponsorTransaction sponsors(Consumer<SponsorFee> s) {
-        SponsorFee sf = new SponsorFee().from(this);
+        SponsorFee sf = new SponsorFee(this);
         s.accept(sf);
 
         try {
@@ -277,7 +280,7 @@ public class Account {
     }
 
     public SetAssetScriptTransaction setsAssetScript(Consumer<SetAssetScript> s) {
-        SetAssetScript sa = new SetAssetScript().from(this);
+        SetAssetScript sa = new SetAssetScript(this);
         s.accept(sa);
 
         try {
@@ -297,7 +300,7 @@ public class Account {
     }
 
     public InvokeScriptTransaction invokes(Consumer<InvokeScript> i) {
-        InvokeScript is = new InvokeScript().from(this);
+        InvokeScript is = new InvokeScript(this);
         i.accept(is);
 
         String dApp = is.dApp == null || is.dApp.isEmpty() ? is.sender.address() : is.dApp;

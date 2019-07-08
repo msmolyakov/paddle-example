@@ -13,15 +13,16 @@ public class Reissue implements Action {
     public boolean isReissuable;
     public long fee;
 
-    public Reissue() {
+    public Reissue(Account from) {
+        this.issuer = from;
+
         this.quantity = 10000_00000000L; //TODO а надо ли?
         this.isReissuable = true; //TODO а надо ли?
         this.fee = 0;
     }
 
-    public Reissue from(Account issuer) {
-        this.issuer = issuer;
-        return this;
+    public static Reissue reissue(Account from) {
+        return new Reissue(from);
     }
 
     public Reissue asset(String assetId) {

@@ -13,14 +13,15 @@ public class SponsorFee implements Action {
     public long minSponsoredAssetFee;
     public long fee;
 
-    public SponsorFee() {
+    public SponsorFee(Account from) {
+        this.sender = from;
+
         this.minSponsoredAssetFee = 1;
         this.fee = 0;
     }
 
-    public SponsorFee from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static SponsorFee sponsorFee(Account from) {
+        return new SponsorFee(from);
     }
 
     public SponsorFee asset(String assetId) {

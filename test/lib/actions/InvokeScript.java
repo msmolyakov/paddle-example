@@ -21,26 +21,18 @@ public class InvokeScript implements Action {
     public long fee;
     public String feeAssetId;
 
-    public InvokeScript(String addressOrAlias) {
-        this.dApp = addressOrAlias;
+    public InvokeScript(Account from) {
+        this.sender = from;
+        this.dApp = from.address();
+
         this.call = null;
         this.payments = new ArrayList<>();
         this.fee = 0;
         this.feeAssetId = "WAVES";
     }
 
-    public InvokeScript(Account dApp) {
-        this(dApp.address());
-    }
-
-    public InvokeScript() {
-        this("");
-    }
-
-    public InvokeScript from(Account sender) {
-        this.sender = sender;
-        if (this.dApp == null) this.dApp = this.sender.address();
-        return this;
+    public static InvokeScript invokeScript(Account from) {
+        return new InvokeScript(from);
     }
 
     public InvokeScript dApp(String addressOrAlias) {
@@ -49,17 +41,11 @@ public class InvokeScript implements Action {
     }
 
     public InvokeScript dApp(Account account) {
-        this.dApp = account.address();
-        return this;
+        return dApp(account.address());
     }
 
     public InvokeScript function(String name, InvokeScriptTransaction.FunctionalArg... args) {
-        if (this.call == null) {
-            this.call = new FunctionCall(name);
-        } else {
-            this.call.setName(name);
-            //TODO clear args
-        }
+        this.call = new FunctionCall(name);
         Arrays.stream(args).forEach(arg -> this.call.addArg(arg));
         return this;
     }
@@ -70,11 +56,13 @@ public class InvokeScript implements Action {
     }
 
     public InvokeScript payment(long amount, String assetId) {
+        //TODO several payments
         this.payments.add(new Payment(amount, assetId));
         return this;
     }
 
     public InvokeScript wavesPayment(long amount) {
+        //TODO several payments
         return payment(amount, null);
     }
 

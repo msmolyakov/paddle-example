@@ -18,14 +18,15 @@ public class WriteData implements Action {
     public List<DataEntry<?>> data;
     public long fee;
 
-    public WriteData() {
+    public WriteData(Account from) {
+        this.sender = from;
+
         this.data = new LinkedList<>();
         this.fee = 0;
     }
 
-    public WriteData from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static WriteData writeData(Account from) {
+        return new WriteData(from);
     }
 
     public WriteData data(DataEntry<?>... data) {

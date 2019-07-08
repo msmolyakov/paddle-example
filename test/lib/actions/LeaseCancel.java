@@ -11,13 +11,13 @@ public class LeaseCancel implements Action {
     public Account sender;
     public long fee;
 
-    public LeaseCancel() {
+    public LeaseCancel(Account from) {
+        this.sender = from;
         this.fee = 0;
     }
 
-    public LeaseCancel from(Account sender) {
-        this.sender = sender;
-        return this;
+    public static LeaseCancel leaseCancel(Account from) {
+        return new LeaseCancel(from);
     }
 
     public LeaseCancel leaseId(String leaseId) {
