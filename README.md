@@ -6,7 +6,7 @@ MVP:
 - [ ] `node.send(invoke().sender(alice).dApp("dApp").func(""))`
 - [x] fix: REST API key
 - [ ] save test logs in target/datetime subdir + waves.log + test.log; verbose mode
-- [ ] AssertJ
+- [x] AssertJ
 - [ ] as setScript: truffle way (deploy, test/main values, etc)
 - [ ] tutorial article to Habr (ru, en), Medium + Travis howto
 

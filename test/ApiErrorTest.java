@@ -10,7 +10,9 @@ import org.junit.jupiter.api.TestInstance;
 
 import static lib.Node.connectToNode;
 import static lib.Node.runDockerNode;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
@@ -36,7 +38,7 @@ class ApiErrorTest {
 
     @Test
     void a() {
-        assertEquals("Asset", node.api.assetDetails(assetId).name);
+        assertThat(node.api.assetDetails(assetId).name).isEqualTo("Asset");
     }
 
     @Test
@@ -45,8 +47,8 @@ class ApiErrorTest {
                 System.out.println("result -> " + node.api.assetDetails("r3r3r3").name)
         );
         assertAll("error fields",
-                () -> assertEquals(199, e.error),
-                () -> assertEquals("Failed to find issue transaction by ID", e.message)
+                () -> assertThat(e.error).isEqualTo(199),
+                () -> assertThat(e.message).isEqualTo("Failed to find issue transaction by ID")
         );
     }
 
@@ -57,7 +59,7 @@ class ApiErrorTest {
         NodeError e = assertThrows(NodeError.class, () ->
                 unexistedNode.api.assetDetails(assetId)
         );
-        assertTrue(e.getMessage().contains("Failed to connect to"));
+        assertThat(e.getMessage()).contains("Failed to connect to");
     }
 
 }

@@ -6,8 +6,8 @@ import org.junit.jupiter.api.*;
 
 import static lib.Node.runDockerNode;
 import static lib.actions.invoke.Arg.arg;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 
 @TestMethodOrder(Alphanumeric.class)
@@ -45,10 +45,10 @@ class TestSuite {
             bob.invokes(i -> i.dApp(alice).function("deposit").wavesPayment(amount));
 
             assertAll("data and balances",
-                    () -> assertEquals(1, alice.data().size()),
-                    () -> assertEquals(amount, alice.dataInt(bob.address())),
+                    () -> assertThat(alice.data().size()).isEqualTo(1),
+                    () -> assertThat(alice.dataInt(bob.address())).isEqualTo(amount),
 
-                    () -> assertEquals(aliceInitBalance + amount, alice.balance())
+                    () -> assertThat(alice.balance()).isEqualTo(aliceInitBalance + amount)
             );
         }
 
@@ -60,8 +60,8 @@ class TestSuite {
             bob.invokes(i -> i.dApp(alice).function("deposit").wavesPayment(amount));
 
             assertAll("data",
-                    () -> assertEquals(1, alice.data().size()),
-                    () -> assertEquals(prevDeposit + amount, alice.dataInt(bob.address()))
+                    () -> assertThat(alice.data().size()).isEqualTo(1),
+                    () -> assertThat(alice.dataInt(bob.address())).isEqualTo(prevDeposit + amount)
             );
         }
 
@@ -73,9 +73,9 @@ class TestSuite {
             carol.invokes(i -> i.dApp(alice).function("deposit").wavesPayment(amount));
 
             assertAll("data",
-                    () -> assertEquals(2, alice.data().size()),
-                    () -> assertEquals(bobDeposit, alice.dataInt(bob.address())),
-                    () -> assertEquals(amount, alice.dataInt(carol.address()))
+                    () -> assertThat(alice.data().size()).isEqualTo(2),
+                    () -> assertThat(alice.dataInt(bob.address())).isEqualTo(bobDeposit),
+                    () -> assertThat(alice.dataInt(carol.address())).isEqualTo(amount)
             );
         }
 
@@ -90,12 +90,12 @@ class TestSuite {
             Transaction invoke = bob.invokes(i -> i.dApp(alice).function("withdraw", arg(amount)));
 
             assertAll("data and balances",
-                    () -> assertEquals(2, alice.data().size()),
-                    () -> assertEquals(bobDeposit - amount, alice.dataInt(bob.address())),
-                    () -> assertEquals(carolDeposit, alice.dataInt(carol.address())),
+                    () -> assertThat(alice.data().size()).isEqualTo(2),
+                    () -> assertThat(alice.dataInt(bob.address())).isEqualTo(bobDeposit - amount),
+                    () -> assertThat(alice.dataInt(carol.address())).isEqualTo(carolDeposit),
 
-                    () -> assertEquals(aliceInitBalance - amount, alice.balance()),
-                    () -> assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance())
+                    () -> assertThat(alice.balance()).isEqualTo(aliceInitBalance - amount),
+                    () -> assertThat(bob.balance()).isEqualTo(bobInitBalance + amount - invoke.getFee())
             );
         }
 
@@ -108,11 +108,11 @@ class TestSuite {
             Transaction invoke = bob.invokes(i -> i.dApp(alice).function("withdraw", arg(amount)));
 
             assertAll("data and balances",
-                    () -> assertEquals(2, alice.data().size()),
-                    () -> assertEquals(0, alice.dataInt(bob.address())),
+                    () -> assertThat(alice.data().size()).isEqualTo(2),
+                    () -> assertThat(alice.dataInt(bob.address())).isEqualTo(0),
 
-                    () -> assertEquals(aliceInitBalance - amount, alice.balance()),
-                    () -> assertEquals(bobInitBalance + amount - invoke.getFee(), bob.balance())
+                    () -> assertThat(alice.balance()).isEqualTo(aliceInitBalance - amount),
+                    () -> assertThat(bob.balance()).isEqualTo(bobInitBalance + amount - invoke.getFee())
             );
         }
 
