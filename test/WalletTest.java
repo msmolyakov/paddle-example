@@ -1,14 +1,12 @@
 import com.wavesplatform.wavesj.Transaction;
 import im.mak.paddle.Account;
-import im.mak.paddle.Node;
-import im.mak.paddle.Version;
+import im.mak.paddle.DockerNode;
 import im.mak.paddle.exceptions.NodeError;
 import org.junit.jupiter.api.*;
 
-import java.nio.file.Paths;
-
-import static im.mak.paddle.Node.runDockerNode;
+import static im.mak.paddle.Async.async;
 import static im.mak.paddle.actions.invoke.Arg.arg;
+import static im.mak.paddle.util.Script.fromFile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,25 +16,30 @@ import static org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WalletTest {
 
-    private Node node;
+    private DockerNode node;
     private Account alice, bob, carol;
     private String assetId;
 
     @BeforeAll
     void before() {
-        node = runDockerNode();
+        node = new DockerNode();
 
-        alice = new Account(node, 1_00000000L);
-        bob = new Account(node, 2_00000000L);
-        carol = new Account(node, 1_00000000L);
-
-        alice.setsScript(s -> s.script(Paths.get("wallet.ride")));
-        assetId = bob.issues(a -> a.quantity(1000).decimals(0)).getId().toString();
+        async(
+                () -> {
+                    alice = new Account(node, 1_00000000L);
+                    alice.setsScript(s -> s.script(fromFile("wallet.ride")));
+                },
+                () -> {
+                    bob = new Account(node, 2_00000000L);
+                    assetId = bob.issues(a -> a.quantity(1000).decimals(0)).getId().toString();
+                },
+                () -> carol = new Account(node, 1_00000000L)
+        );
     }
 
     @AfterAll
     void after() {
-        node.stopDockerNode();
+        node.shutdown();
     }
 
     @Test
