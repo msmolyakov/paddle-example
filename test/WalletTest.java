@@ -1,6 +1,5 @@
 import com.wavesplatform.wavesj.Transaction;
 import im.mak.paddle.Account;
-import im.mak.paddle.DockerNode;
 import im.mak.paddle.exceptions.NodeError;
 import org.junit.jupiter.api.*;
 
@@ -16,30 +15,22 @@ import static org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WalletTest {
 
-    private DockerNode node;
     private Account alice, bob, carol;
     private String assetId;
 
     @BeforeAll
     void before() {
-        node = new DockerNode();
-
         async(
                 () -> {
-                    alice = new Account(node, 1_00000000L);
+                    alice = new Account(1_00000000L);
                     alice.setsScript(s -> s.script(fromFile("wallet.ride")));
                 },
                 () -> {
-                    bob = new Account(node, 2_00000000L);
+                    bob = new Account(2_00000000L);
                     assetId = bob.issues(a -> a.quantity(1000).decimals(0)).getId().toString();
                 },
-                () -> carol = new Account(node, 1_00000000L)
+                () -> carol = new Account(1_00000000L)
         );
-    }
-
-    @AfterAll
-    void after() {
-        node.shutdown();
     }
 
     @Test
